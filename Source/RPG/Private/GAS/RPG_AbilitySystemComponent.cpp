@@ -8,6 +8,7 @@
 FAbilitySetActiveHandle URPG_AbilitySystemComponent::AddAbilitySet(UAbilitySet* AbilitySet,
 	UObject* SourceObject)
 {
+	check(AbilitySet);
 	return AbilitySet->AddAbilitySet(this, SourceObject);
 }
 

@@ -70,7 +70,7 @@ FAbilitySetActiveHandle UAbilitySet::AddAbilitySet(UAbilitySystemComponent* Abil
 
 	AddGameplayEffects(AbilitySystemComponent, SourceObject, Handle);
 
-	TWeakObjectPtr<UAbilitySystemComponent> ObjectPtr(AbilitySystemComponent);
+	const TWeakObjectPtr<UAbilitySystemComponent> ObjectPtr(AbilitySystemComponent);
 	Handle.SetAbilitySystemComponent(ObjectPtr);
 
 	return Handle;
@@ -139,7 +139,7 @@ void UAbilitySet::AddAttributeSets(UAbilitySystemComponent* AbilitySystemCompone
 		AbilitySystemComponent->AddAttributeSetSubobject(AttributeSet);
 
 		// Add a weak object pointer to our handle
-		TWeakObjectPtr<UAttributeSet> WeakObjectPtr(AttributeSet);
+		const TWeakObjectPtr<UAttributeSet> WeakObjectPtr(AttributeSet);
 		Handle.AddAttributeSet(WeakObjectPtr);
 	}
 }
