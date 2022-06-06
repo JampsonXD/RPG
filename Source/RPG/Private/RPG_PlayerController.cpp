@@ -77,9 +77,11 @@ void ARPG_PlayerController::SetupInventoryWidget()
 	}
 
 	// Create our Inventory widget, add it to the player viewport, and set its mode to hidden
-	SetInventoryWidget(CreateWidget(this, InventoryWidgetClass));
-	GetInventoryWidget()->AddToViewport();
-	GetInventoryWidget()->SetVisibility(ESlateVisibility::Hidden);
+	UUWRPG_Inventory* Widget = CreateWidget<UUWRPG_Inventory>(this, InventoryWidgetClass);
+	SetInventoryWidget(Widget);
+	Widget->AddToViewport();
+	Widget->SetVisibility(ESlateVisibility::Hidden);
+	Widget->SetupInventoryWidget(GetInventorySystemComponent());
 }
 
 UUWRPG_HUD* ARPG_PlayerController::GetRPGHUD() const
@@ -87,7 +89,7 @@ UUWRPG_HUD* ARPG_PlayerController::GetRPGHUD() const
 	return RPGHUD;
 }
 
-UUserWidget* ARPG_PlayerController::GetInventoryWidget() const
+UUWRPG_Inventory* ARPG_PlayerController::GetInventoryWidget() const
 {
 	return InventoryWidget;
 }

@@ -8,6 +8,7 @@
 #include "RPG_Types.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/UWRPG_HUD.h"
+#include "UI/UWRPG_Inventory.h"
 #include "UI/WCRPG_DamagePopup.h"
 #include "RPG_PlayerController.generated.h"
 
@@ -32,7 +33,7 @@ protected:
 	TSubclassOf<UUWRPG_HUD> HUDClass;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG Player Controller | UI | Inventory")
-	TSubclassOf<UUserWidget> InventoryWidgetClass;
+	TSubclassOf<UUWRPG_Inventory> InventoryWidgetClass;
 
 	// HUD Widget
 	UPROPERTY(BlueprintReadOnly, Category = "RPG Player Controller | UI")
@@ -40,7 +41,7 @@ protected:
 
 	// Inventory Widget
 	UPROPERTY(BlueprintReadOnly, Category = "RPG Player Controller | UI")
-	UUserWidget* InventoryWidget;
+	UUWRPG_Inventory* InventoryWidget;
 
 	UPROPERTY()
 	bool bInventoryOpen;
@@ -63,7 +64,7 @@ protected:
 	
 	void SetInventoryOpen(bool bIsOpen) { bInventoryOpen = bIsOpen; }
 
-	void SetInventoryWidget(UUserWidget* InWidget) { InventoryWidget = InWidget; }
+	void SetInventoryWidget(UUWRPG_Inventory* InWidget) { InventoryWidget = InWidget; }
 
 	void SetRPGHUD(UUWRPG_HUD* InWidget) { RPGHUD = InWidget; }
 
@@ -87,7 +88,7 @@ public:
 	UUWRPG_HUD* GetRPGHUD() const;
 
 	UFUNCTION(BlueprintPure, Category = "RPG Player Controller | UI | Inventory")
-	UUserWidget* GetInventoryWidget() const;
+	UUWRPG_Inventory* GetInventoryWidget() const;
 
 	UFUNCTION(BlueprintPure, Category = "RPG Player Controller | UI | Inventory")
 	bool IsInventoryOpen() const;

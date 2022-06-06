@@ -9,6 +9,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemAdded, UItem*, NewItem);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemRemoved, UItem*, OldItem);
 DECLARE_DYNAMIC_DELEGATE_RetVal_OneParam(bool, FItemQuery, UItem*, Item);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -45,6 +46,9 @@ protected:
 	UPROPERTY(BlueprintAssignable)
 	FOnItemAdded OnItemAdded;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnItemRemoved OnItemRemoved;
+
 public:
 	
 	/** Tries adding an item of class to our inventory
@@ -68,6 +72,9 @@ public:
 
 	UFUNCTION()
 	FOnItemAdded& GetOnItemAddedDelegate();
+
+	UFUNCTION()
+	FOnItemRemoved& GetOnItemRemovedDelegate();
 
 	UFUNCTION(BlueprintCallable, Category = "Item Query")
 	bool TryGetItemWithStackCount(int32 StackCount, UItem*& OutItem);

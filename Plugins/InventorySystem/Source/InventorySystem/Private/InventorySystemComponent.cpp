@@ -113,6 +113,11 @@ FOnItemAdded& UInventorySystemComponent::GetOnItemAddedDelegate()
 	return OnItemAdded;
 }
 
+FOnItemRemoved& UInventorySystemComponent::GetOnItemRemovedDelegate()
+{
+	return OnItemRemoved;
+}
+
 bool UInventorySystemComponent::TryGetItemWithStackCount(int32 StackCount, UItem*& OutItem)
 {
 	return QueryInventoryForItem([StackCount](UItem* Item)
