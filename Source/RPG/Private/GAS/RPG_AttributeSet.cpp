@@ -25,6 +25,16 @@ void URPG_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 	{
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxMana());
 	}
+
+	if(Attribute == GetMaxHealthAttribute())
+	{
+		AdjustAttributeForMaxChange(Health, MaxHealth, NewValue, GetHealthAttribute());
+	}
+
+	if(Attribute == GetMaxManaAttribute())
+	{
+		AdjustAttributeForMaxChange(Mana, MaxMana, NewValue, GetManaAttribute());
+	}
 }
 
 void URPG_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -143,4 +153,19 @@ float URPG_AttributeSet::EvaluateExperienceGained(URPG_AbilitySystemComponent* A
 	LevelsGained ++;
 	
 	return EvaluateExperienceGained(ASC, LeftoverExperience, LevelsGained);
+}
+
+void URPG_AttributeSet::AdjustAttributeForMaxChange(const FGameplayAttributeData& AffectedAttribute, const FGameplayAttributeData& MaxAttribute, float NewMaxValue, const
+                                                    FGameplayAttribute& AffectedAttributeProperty) const
+{
+	UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+	const float CurrentMaxValue = MaxAttribute.GetCurrentValue();
+
+	if(!FMath::IsNearlyEqual(CurrentMaxValue, NewMaxValue) && ASC)
+	{
+		const float CurrentValue = AffectedAttribute.GetCurrentValue();
+		const float NewDelta = (CurrentMaxValue > 0.f) ? (CurrentValue * NewMaxValue / CurrentMaxValue) - CurrentValue : NewMaxValue;
+
+		ASC->ApplyModToAttributeUnsafe(AffectedAttributeProperty, EGameplayModOp::Additive, NewDelta);
+	}
 }

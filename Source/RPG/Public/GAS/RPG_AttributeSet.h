@@ -76,4 +76,7 @@ protected:
 	virtual void HandleExperienceAttribute(UAbilitySystemComponent* ASC);
 
 	virtual float EvaluateExperienceGained(URPG_AbilitySystemComponent* ASC, const float InExperience, float& LevelsGained);
+
+	void AdjustAttributeForMaxChange(const FGameplayAttributeData& AffectedAttribute, const FGameplayAttributeData& MaxAttribute, float NewMaxValue, const
+	                                 FGameplayAttribute& AffectedAttributeProperty) const;
 };
