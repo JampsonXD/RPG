@@ -33,8 +33,6 @@ protected:
 
 	void SetInventorySystemComponent(UInventorySystemComponent* ISC) { InventorySystemComponent = ISC; }
 
-	UInventorySystemComponent* GetInventorySystemComponent() const { return InventorySystemComponent; }
-
 	UFUNCTION(BlueprintCallable, Category = "RPG UI | Inventory")
 	void AddItemToInventoryWidget(UItem* NewItem);
 
@@ -45,6 +43,8 @@ protected:
 	
 public:
 
+	UInventorySystemComponent* GetInventorySystemComponent() const { return InventorySystemComponent; }
+	
 	UFUNCTION(BlueprintCallable, Category = "RPG UI | Inventory")
 	void SetupInventoryWidget(UInventorySystemComponent* ISC);
 };

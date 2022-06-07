@@ -3,8 +3,11 @@
 
 #include "RPG_PlayerController.h"
 
+#include "AbilitySystemGlobals.h"
 #include "InventorySystemComponent.h"
 #include "QuestSystemComponent.h"
+#include "RPGBFL_MainFunctions.h"
+#include "RPG_PlayerState.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Characters/RPG_PlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -43,7 +46,44 @@ void ARPG_PlayerController::AddPendingDamagePopup(FDamagePopupData PopupData)
 	}
 }
 
-void ARPG_PlayerController::SetupRPGHUD()
+void ARPG_PlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	WaitAbilitySystemComponentAndPlayerState();
+}
+
+void ARPG_PlayerController::CustomBeginPlay()
+{
+	ARPG_PlayerState* PS = GetPlayerState<ARPG_PlayerState>();
+	URPG_AbilitySystemComponent* ASC = Cast<URPG_AbilitySystemComponent>(PS->GetAbilitySystemComponent());
+
+	SetupRPGHUD(ASC);
+	SetupInventoryWidget();
+	GetInventorySystemComponent()->InitInventorySystemComponent();
+}
+
+void ARPG_PlayerController::WaitAbilitySystemComponentAndPlayerState()
+{
+	ARPG_PlayerState* PS = GetPlayerState<ARPG_PlayerState>();
+	URPG_AbilitySystemComponent* ASC = PlayerState ? Cast<URPG_AbilitySystemComponent>(PS->GetAbilitySystemComponent()) : nullptr;
+
+	// If one of these is invalid, create a timer and try again until both of these are valid
+	if(!PS || !ASC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s Player State or Ability System Component has not validated yet!"), *GetName());
+		FTimerHandle TimerHandle;
+		FTimerDelegate TimerDelegate;
+		TimerDelegate.BindUObject(this, &ARPG_PlayerController::WaitAbilitySystemComponentAndPlayerState);
+		GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, 0.10f, false);
+		return;
+	}
+
+	CustomBeginPlay();
+	K2_CustomBeginPlay();
+}
+
+void ARPG_PlayerController::SetupRPGHUD(URPG_AbilitySystemComponent* ASC)
 {
 	if(GetRPGHUD())
 	{
@@ -57,9 +97,17 @@ void ARPG_PlayerController::SetupRPGHUD()
 		return;
 	}
 
+	if(!ASC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Tried setting up HUD with an invalid ASC for s%!"), *GetName());
+		return;
+	}
+
 	// Create our HUD widget and add it to the player viewport
-	SetRPGHUD(CreateWidget<UUWRPG_HUD>(this, HUDClass));
-	GetRPGHUD()->AddToViewport();
+	UUWRPG_HUD* Widget = CreateWidget<UUWRPG_HUD>(this, HUDClass);
+	SetRPGHUD(Widget);
+	Widget->AddToViewport();
+	Widget->InitializeHUD(ASC);
 }
 
 void ARPG_PlayerController::SetupInventoryWidget()

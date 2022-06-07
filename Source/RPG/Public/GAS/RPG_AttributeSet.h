@@ -31,6 +31,18 @@ public:
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(URPG_AttributeSet, Health)
 
+	UPROPERTY(BlueprintReadOnly, Category = "Health")
+	FGameplayAttributeData MaxHealth;
+	ATTRIBUTE_ACCESSORS(URPG_AttributeSet, MaxHealth)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Mana")
+	FGameplayAttributeData Mana;
+	ATTRIBUTE_ACCESSORS(URPG_AttributeSet, Mana)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Mana")
+	FGameplayAttributeData MaxMana;
+	ATTRIBUTE_ACCESSORS(URPG_AttributeSet, MaxMana)
+
 	UPROPERTY(BlueprintReadOnly, Category = "PhysicalArmor")
 	FGameplayAttributeData PhysicalArmor;
 	ATTRIBUTE_ACCESSORS(URPG_AttributeSet, PhysicalArmor)
@@ -57,7 +69,7 @@ public:
 
 protected:
 	
-	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 

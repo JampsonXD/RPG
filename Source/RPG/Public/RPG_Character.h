@@ -23,6 +23,15 @@ protected:
 	USkeletalMeshComponent* ChestArmorMeshComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Armor")
+	USkeletalMeshComponent* GauntletMeshComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Armor")
+	USkeletalMeshComponent* HelmetMeshComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Armor")
+	USkeletalMeshComponent* LegMeshComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Armor")
 	TMap<EArmorEquipSlot, UArmorItem*> ArmorMap;
 	
 	virtual void PossessedBy(AController* NewController) override;
@@ -49,9 +58,6 @@ protected:
 
 	UFUNCTION()
 	USkeletalMeshComponent* GetMeshComponentFromArmorSlotType(EArmorEquipSlot EquipSlot) const;
-
-	UFUNCTION()
-	void UnequipArmor(UArmorItem* ArmorItem) const;
 	
 	UFUNCTION()
 	virtual void InitAttributeSets(class ARPG_PlayerState* PS);
@@ -67,8 +73,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure , Category = "Attributes | Character Level")
 	float GetCharacterLevel();
+
+	UFUNCTION(BlueprintPure, Category = "Item | Armor")
+	bool IsEquipped(UItem* Item) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Item | Armor")
 	bool TryEquipArmor(UArmorItem* Armor);
+
+	UFUNCTION()
+	void UnequipArmor(UArmorItem* ArmorItem);
 };
 

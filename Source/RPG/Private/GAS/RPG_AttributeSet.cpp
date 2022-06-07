@@ -12,11 +12,19 @@ URPG_AttributeSet::URPG_AttributeSet(const FObjectInitializer& ObjectInitializer
 	
 }
 
-void URPG_AttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+void URPG_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
-	Super::PostAttributeChange(Attribute, OldValue, NewValue);
+	Super::PreAttributeChange(Attribute, NewValue);
 
-	
+	if(Attribute == GetHealthAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
+	}
+
+	if(Attribute == GetManaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxMana());
+	}
 }
 
 void URPG_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -83,6 +91,18 @@ void URPG_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 			const float NewHealth = FMath::Max<float>(GetHealth() - DamageDone, 0.f);
 			SetHealth(NewHealth);
 		}
+	}
+
+	if(Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		const float NewHealth = FMath::Clamp(GetHealth(), 0.f, GetMaxHealth());
+		SetHealth(NewHealth);
+	}
+	
+	if(Data.EvaluatedData.Attribute == GetManaAttribute())
+	{
+		const float NewMana = FMath::Clamp(GetMana(), 0.f, GetMaxMana());
+		SetMana(NewMana);
 	}
 
 	if(Data.EvaluatedData.Attribute == GetExperienceAttribute())

@@ -2,7 +2,6 @@
 
 
 #include "UI/UWRPG_Inventory.h"
-
 #include "InventorySystemComponent.h"
 #include "UI/UWRPG_InventorySlot.h"
 #include "Components/VerticalBox.h"
@@ -15,6 +14,7 @@ void UUWRPG_Inventory::SetupInventoryWidget(UInventorySystemComponent* ISC)
 	ISC->GetOnItemAddedDelegate().AddDynamic(this, &UUWRPG_Inventory::AddItemToInventoryWidget);
 	ISC->GetOnItemRemovedDelegate().AddDynamic(this, &UUWRPG_Inventory::RemoveItemFromInventoryWidget);
 
+	// Any items that could be added prior to our inventory widget being setup will need to have item slots created for them
 	TArray<UItem*> Items;
 	if(ISC->GetInventoryItems(FGameplayTag::EmptyTag, Items))
 	{
@@ -34,7 +34,7 @@ void UUWRPG_Inventory::AddItemToInventoryWidget(UItem* NewItem)
 	
 	check(InventorySlotClass)
 	UUWRPG_InventorySlot* ItemSlot = CreateWidget<UUWRPG_InventorySlot>(this, InventorySlotClass);
-	ItemSlot->SetupItemSlot(NewItem);
+	ItemSlot->SetupItemSlot(NewItem, GetInventorySystemComponent());
 	InventoryItemHolder->AddChild(ItemSlot);
 
 	// Add our new item to our item slot map
@@ -48,10 +48,10 @@ void UUWRPG_Inventory::RemoveItemFromInventoryWidget(UItem* OldItem)
 		return;
 	}
 
+	// Check if a key exists for the item in our inventory map and remove the item slot from our parent
 	if(UUWRPG_InventorySlot** MapValue = ItemInventorySlotMap.Find(OldItem))
 	{
-		UUWRPG_InventorySlot* InventorySlot = *MapValue;
-		InventorySlot->RemoveFromParent();
+		(*MapValue)->RemoveFromParent();
 	}
 
 	ItemInventorySlotMap.Remove(OldItem);

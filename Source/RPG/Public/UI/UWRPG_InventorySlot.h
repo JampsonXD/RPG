@@ -14,12 +14,26 @@ UCLASS()
 class RPG_API UUWRPG_InventorySlot : public UUserWidget
 {
 	GENERATED_BODY()
+	
+	UPROPERTY()
+	UItem* Item;
 
+	UPROPERTY()
+	UInventorySystemComponent* InventorySystemComponent;
 
 protected:
-	
-	UPROPERTY(BlueprintReadOnly)
-	UItem* Item;
+
+	UFUNCTION(BlueprintCallable, Category = "RPG UI | Inventory | Item Slot")
+	UItem* GetItem() const;
+
+	UFUNCTION(BlueprintCallable, Category = "RPG UI | Inventory | Item Slot")
+	UInventorySystemComponent* GetInventorySystemComponent() const;
+
+	UFUNCTION()
+	void SetItem(UItem* InItem);
+
+	UFUNCTION()
+	void SetInventorySystemComponent(UInventorySystemComponent* ISC);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "RPG UI | Inventory | Item Slot", DisplayName = "SetupItemSlot")
 	void K2_SetupItemSlot(UItem* InItem);
@@ -33,6 +47,7 @@ protected:
 	virtual void BeginDestroy() override;
 
 public:
-	void SetupItemSlot(UItem* InItem);
+	UFUNCTION()
+	void SetupItemSlot(UItem* InItem, UInventorySystemComponent* ISC);
 	
 };

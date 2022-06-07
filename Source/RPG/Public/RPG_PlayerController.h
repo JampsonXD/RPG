@@ -25,7 +25,6 @@ class RPG_API ARPG_PlayerController : public APlayerController, public IInventor
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Quest System Component", meta = (AllowPrivateAccess = "true"))
 	class UQuestSystemComponent* QuestSystemComponent;
-
 	
 protected:
 
@@ -68,6 +67,23 @@ protected:
 
 	void SetRPGHUD(UUWRPG_HUD* InWidget) { RPGHUD = InWidget; }
 
+	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void CustomBeginPlay();
+
+	UFUNCTION()
+	void WaitAbilitySystemComponentAndPlayerState();
+
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Custom Begin Play")
+	void K2_CustomBeginPlay();
+
+	UFUNCTION()
+	void SetupRPGHUD(URPG_AbilitySystemComponent* ASC);
+
+	UFUNCTION()
+	void SetupInventoryWidget();
+
 public:
 
 	ARPG_PlayerController(const FObjectInitializer& ObjectInitializer);
@@ -77,12 +93,6 @@ public:
 	virtual UQuestSystemComponent* GetQuestSystemComponent() const override;
 
 	void AddPendingDamagePopup(FDamagePopupData PopupData);
-
-	UFUNCTION(BlueprintCallable, Category = "RPG Player Controller | HUD")
-	void SetupRPGHUD();
-
-	UFUNCTION(BlueprintCallable, Category = "RPG Player Controller | UI | Inventory")
-	void SetupInventoryWidget();
 
 	UFUNCTION(BlueprintPure, Category = "RPG Player Controller | HUD")
 	UUWRPG_HUD* GetRPGHUD() const;

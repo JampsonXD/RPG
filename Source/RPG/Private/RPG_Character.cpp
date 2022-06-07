@@ -22,6 +22,18 @@ ARPG_Character::ARPG_Character(const FObjectInitializer& ObjectInitializer) : Su
 	ChestArmorMeshComponent->SetupAttachment(GetMesh());
 	ChestArmorMeshComponent->SetMasterPoseComponent(GetMesh(), true);
 
+	GauntletMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(FName("GauntletArmor"));
+	GauntletMeshComponent->SetupAttachment(GetMesh());
+	GauntletMeshComponent->SetMasterPoseComponent(GetMesh(), true);
+
+	HelmetMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(FName("HelmetArmor"));
+	HelmetMeshComponent->SetupAttachment(GetMesh());
+	HelmetMeshComponent->SetMasterPoseComponent(GetMesh(), true);
+
+	LegMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(FName("LegArmor"));
+	LegMeshComponent->SetupAttachment(GetMesh());
+	LegMeshComponent->SetMasterPoseComponent(GetMesh(), true);
+
 	// Add our armor map slots, these should have null values as we shouldn't have any armor equipped
 	ArmorMap.Add(EArmorEquipSlot::Helmet, nullptr);
 	ArmorMap.Add(EArmorEquipSlot::Chest, nullptr);
@@ -50,7 +62,31 @@ UAbilitySystemComponent* ARPG_Character::GetAbilitySystemComponent() const
 
 float ARPG_Character::GetCharacterLevel()
 {
-	return 1.0f;
+	if(AttributeSet.IsValid())
+	{
+		return AttributeSet.Get()->GetCharacterLevel();
+	}
+
+	return 1.f;
+}
+
+bool ARPG_Character::IsEquipped(UItem* Item) const
+{
+	if(!Item)
+	{
+		return false;
+	}
+	
+	// Loop through our armor and check if we have the item equipped
+	for(const TPair<EArmorEquipSlot, UArmorItem*> Pair : ArmorMap)
+	{
+		if(Pair.Value == Item)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool ARPG_Character::TryEquipArmor(UArmorItem* Armor)
@@ -83,15 +119,18 @@ bool ARPG_Character::TryEquipArmor(UArmorItem* Armor)
 	return true;
 }
 
-void ARPG_Character::UnequipArmor(UArmorItem* ArmorItem) const
+void ARPG_Character::UnequipArmor(UArmorItem* ArmorItem)
 {
 	if(!ArmorItem)
 	{
 		return;
 	}
 
+	// Remove our granted ability set and set the armor map back to null
 	ArmorItem->RemoveAbilitySet();
-	
+	ArmorMap.Add(ArmorItem->GetEquipSlot(), nullptr);
+
+	// Try getting our mesh component for our armor and remove the mesh
 	if(USkeletalMeshComponent* MeshComponent = GetMeshComponentFromArmorSlotType(ArmorItem->GetEquipSlot()))
 	{
 		MeshComponent->SetSkeletalMesh(nullptr);
@@ -128,6 +167,15 @@ USkeletalMeshComponent* ARPG_Character::GetMeshComponentFromArmorSlotType(EArmor
 	{
 		case EArmorEquipSlot::Chest :
 			return ChestArmorMeshComponent;
+
+		case EArmorEquipSlot::Gauntlets :
+			return GauntletMeshComponent;
+
+		case EArmorEquipSlot::Helmet :
+			return HelmetMeshComponent;
+
+		case EArmorEquipSlot::Legs :
+			return LegMeshComponent;
 
 		default:
 			return nullptr;

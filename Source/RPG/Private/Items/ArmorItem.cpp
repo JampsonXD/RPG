@@ -20,6 +20,13 @@ bool UArmorItem::Use_Implementation(UInventorySystemComponent* TargetInventorySy
 		return false;
 	}
 
+	// Check if we have the item equipped already and unequip
+	if (TargetCharacter->IsEquipped(this))
+	{
+		TargetCharacter->UnequipArmor(this);
+		return true;
+	}
+
 	return TargetCharacter->TryEquipArmor(this);
 }
 
