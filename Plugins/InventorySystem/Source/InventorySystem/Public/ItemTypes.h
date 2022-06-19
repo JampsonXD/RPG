@@ -5,9 +5,53 @@
 #include "CoreMinimal.h"
 #include "ItemTypes.generated.h"
 
+class UInventorySystemComponent;
+class UItem;
+
 /**
  * 
  */
+
+USTRUCT()
+struct FItemUseData
+{
+	GENERATED_BODY()
+
+	FItemUseData() : ISC(nullptr), AvatarActor(nullptr) {}
+	FItemUseData(UInventorySystemComponent* InISC, AActor* InAvatarActor) : ISC(InISC), AvatarActor(InAvatarActor) {}
+	virtual ~FItemUseData() {}
+
+	UPROPERTY()
+	UInventorySystemComponent* ISC;
+
+	UPROPERTY()
+	AActor* AvatarActor;
+};
+
+class UItem;
+USTRUCT(BlueprintType)
+struct FInventoryItemData
+{
+	GENERATED_BODY()
+
+	FInventoryItemData()
+	{
+		ItemClass = nullptr;
+		StackCount = 1;
+	}
+
+	FInventoryItemData(TSubclassOf<UItem> InItemClass, int InStackCount)
+	{
+		ItemClass = InItemClass;
+		StackCount = InStackCount;
+	}
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item Data")
+	TSubclassOf<UItem> ItemClass;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item Data")
+	int StackCount;
+};
 
 USTRUCT(BlueprintType)
 struct FItemUIData

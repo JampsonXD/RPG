@@ -2,54 +2,80 @@
 
 
 #include "Item.h"
-#include "ItemTypes.h"
 
-UItem::UItem(const class FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+#include "InventorySystemComponent.h"
+
+UItem::UItem(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	MaxStackCount = -1;
 	CurrentStackCount = 0;
-	ItemImage = nullptr;
 }
 
-bool UItem::Use_Implementation(UInventorySystemComponent* TargetInventorySystemComponent, AActor* TargetActor)
+UInventorySystemComponent* UItem::GetOwningInventorySystemComponent() const
 {
-	return true;
+	return OwningInventorySystemComponent;
 }
 
-bool UItem::CanUseItem_Implementation(UInventorySystemComponent* TargetInventorySystemComponent, AActor* TargetActor)
+AActor* UItem::GetOwningActor() const
 {
-	return true;
+	return OwningActor;
 }
 
-bool UItem::IsStackable()
-{
-	return MaxStackCount != 1;
-}
-
-bool UItem::HasUnlimitedStacks()
-{
-	return MaxStackCount == -1;
-}
-
-int32 UItem::GetMaxItemStacks()
-{
-	return MaxStackCount;
-}
-
-int32 UItem::GetCurrentItemStacks()
-{
-	return CurrentStackCount;
-}
-
-FGameplayTag UItem::GetItemType()
+FGameplayTag UItem::GetItemType() const
 {
 	return ItemType;
 }
 
-FItemUIData UItem::MakeItemData()
+FName UItem::GetItemName() const
 {
-	FItemUIData ItemData = FItemUIData(ItemName, ItemDescription, ItemImage, IsStackable(), CurrentStackCount, MaxStackCount);
-	return ItemData;
+	return ItemName;
+}
+
+FText UItem::GetItemDescription() const
+{
+	return ItemDescription;
+}
+
+UTexture2D* UItem::GetItemImage() const
+{
+	return ItemImageSoftPointer.LoadSynchronous();
+}
+
+bool UItem::CanUse() const
+{
+	return false;
+}
+
+void UItem::Use()
+{
+	
+}
+
+void UItem::Add(UInventorySystemComponent* InventorySystemComponent)
+{
+	SetOwningInventorySystemComponent(InventorySystemComponent);
+	SetOwningActor(InventorySystemComponent->OwningActor);
+}
+
+void UItem::Remove()
+{
+	SetOwningInventorySystemComponent(nullptr);
+	SetOwningActor(nullptr);
+}
+
+int UItem::GetCurrentStackCount() const
+{
+	return CurrentStackCount;
+}
+
+bool UItem::IsStackable() const
+{
+	return false;
+}
+
+int UItem::GetMaxStackCount() const
+{
+	return MaxStackCount;
 }
 
 FOnCurrentStackCountChanged& UItem::GetOnCurrentStackCountChangedDelegate()
@@ -65,6 +91,26 @@ void UItem::AddStacks(int32 StacksToAdd)
 	CurrentStackCount = HasUnlimitedStacks() ? CurrentStackCount + StacksToAdd : FMath::Min(CurrentStackCount + StacksToAdd, MaxStackCount);
 
 	// Broadcast that our stack count has changed
+	if(CurrentStackCount != OldStackCount && OnCurrentStackCountChanged.IsBound())
+	{
+		OnCurrentStackCountChanged.Broadcast(OldStackCount, CurrentStackCount);
+	}
+}
+
+void UItem::RemoveStacks(int32 StacksToRemove)
+{
+	// Verify we are a stackable item
+	if(!IsStackable())
+	{
+		return;
+	}
+
+	const int32 OldStackCount = CurrentStackCount;
+
+	// Only remove stacks down to a 0 count
+	CurrentStackCount = FMath::Max(CurrentStackCount - StacksToRemove, 0);
+
+	// Broadcast our stack count has changed
 	if(CurrentStackCount != OldStackCount && OnCurrentStackCountChanged.IsBound())
 	{
 		OnCurrentStackCountChanged.Broadcast(OldStackCount, CurrentStackCount);

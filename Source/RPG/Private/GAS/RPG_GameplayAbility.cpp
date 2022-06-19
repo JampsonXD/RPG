@@ -35,7 +35,7 @@ FGameplayEffectContainerSpec URPG_GameplayAbility::MakeEffectContainerSpecFromCo
 			ContainerSpec.AddTargets(TargetHitResults, TargetActors);
 		}
 
-		// Check to see if we are not overriding the ability level, if so just grab the GAB's ability levl
+		// Check to see if we are not overriding the ability level, if so just grab the GAB's ability level
 		if(AbilityLevel == INDEX_NONE)
 		{
 			AbilityLevel = GetAbilityLevel();
@@ -125,9 +125,29 @@ void URPG_GameplayAbility::RemoveCameraEffectFromOwner(UParticleSystemComponent*
 	ParticleSystemComponent->DestroyComponent();
 }
 
+ARPG_Character* URPG_GameplayAbility::GetRPGCharacter() const
+{
+	return RPGCharacter;
+}
+
+URPG_AbilitySystemComponent* URPG_GameplayAbility::GetRPGAbilitySystemComponent() const
+{
+	return RPGAbilitySystemComponent;
+}
+
 void URPG_GameplayAbility::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
 	Super::OnAvatarSet(ActorInfo, Spec);
+
+	if(ActorInfo->AvatarActor.IsValid())
+	{
+		RPGCharacter = Cast<ARPG_Character>(ActorInfo->AvatarActor.Get());
+	}
+
+	if(ActorInfo->AbilitySystemComponent.IsValid())
+	{
+		RPGAbilitySystemComponent = Cast<URPG_AbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get());
+	}
 
 	if(bActivateOnGranted)
 	{

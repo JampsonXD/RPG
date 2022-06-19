@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GAS/GAS_Types.h"
-#include "Kismet/BlueprintFunctionLibrary.h"
 #include "RPGBFL_MainFunctions.generated.h"
 
 /**
@@ -18,6 +17,15 @@ class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 	public:
 
 	/**
+	 * Takes in two arrays, adding any unique items from the target array to the secondary array
+	 * @param TargetArray : Array we are adding unique items from
+	 * @param OutArray : Array we are adding items to
+	 * @return int : How many unique items we have added
+	 */
+	UFUNCTION(BlueprintCallable, meta = (ArrayParm = "TargetArray", ArrayTypeDependentParams = "OutArray"))
+	static int AppendUnique(const TArray<UProperty*>& TargetArray, UPARAM(ref)TArray<UProperty*>& OutArray);
+
+	/**
 	 * Returns the first actor of the passed in actor filter, or the first actor within the array
 	 * @param ActorArray : Array we are filtering
 	 * @param ActorFilter : The actor subclass we are checking against
@@ -26,5 +34,4 @@ class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 	 */
 	UFUNCTION(BlueprintCallable, Category = "RPGBFL Main Functions")
 	static bool GetFirstActorOfClassOrFirstActor(TArray<AActor*> ActorArray, TSubclassOf<AActor> ActorFilter, AActor*& FoundActor);
-	
 };

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "ItemInterface.h"
 #include "ItemTypes.h"
 #include "UObject/Object.h"
 #include "Item.generated.h"
@@ -17,82 +18,93 @@ class UInventorySystemComponent;
  */
 
 UCLASS(BlueprintType, Blueprintable)
-class INVENTORYSYSTEM_API UItem : public UObject
+class INVENTORYSYSTEM_API UItem : public UObject, public IItemInterface
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
 
 friend UInventorySystemComponent;
-	
+
+	UPROPERTY()
+	UInventorySystemComponent* OwningInventorySystemComponent;
+
+	UPROPERTY()
+	AActor* OwningActor;
+
+	void SetOwningInventorySystemComponent(UInventorySystemComponent* OwningISC) { OwningInventorySystemComponent = OwningISC; }
+
+	void SetOwningActor(AActor* InOwningActor) { OwningActor = InOwningActor; }
+
 protected:
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Item | Info")
-	FName ItemName;
 
 	// Label for our Item, what the Item Type is
 	UPROPERTY(EditDefaultsOnly, Category = "Item | Info")
 	FGameplayTag ItemType;
-	
+
+	UPROPERTY(EditDefaultsOnly, Category = "Item | Info")
+	FName ItemName;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Item | Info")
 	FText ItemDescription;
 
-	// Text that will be shown for "using" the item
 	UPROPERTY(EditDefaultsOnly, Category = "Item | Info")
-	FText ItemUseText;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Item | Info")
-	class UTexture2D* ItemImage;
-
-	// Skeletal Mesh used for showing off the item in the UI
-	UPROPERTY(EditDefaultsOnly, Category = "Item")
-	TSoftObjectPtr<USkeletalMesh> ItemSkeletalMesh;
+	TSoftObjectPtr<UTexture2D> ItemImageSoftPointer;
 
 	// If we can be stacked, our max stack count, defaults to -1 if we have unlimited stacks
 	UPROPERTY(EditDefaultsOnly, Category = "Item")
 	int32 MaxStackCount;
 
 	// Current stack count of our item
-	UPROPERTY(EditDefaultsOnly, Category = "Item")
+	UPROPERTY(BlueprintReadOnly, Category = "Item")
 	int32 CurrentStackCount;
 
 	// Delegate for when our Current Stack Count Changes
 	UPROPERTY(BlueprintAssignable)
 	FOnCurrentStackCountChanged OnCurrentStackCountChanged;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Item | Interaction")
-	bool CanUseItem(UInventorySystemComponent* TargetInventorySystemComponent, AActor* TargetActor);
-	
-	/* Functionality called when user tries to interact with the item */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Item | Interaction")
-	bool Use(UInventorySystemComponent* TargetInventorySystemComponent, AActor* TargetActor);
+	bool HasUnlimitedStacks() const { return MaxStackCount == -1; }
 	
 public:
 
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Item")
-	bool IsStackable();
+	UItem(const FObjectInitializer& ObjectInitializer);
 
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Item")
-	bool HasUnlimitedStacks();
+	virtual UInventorySystemComponent* GetOwningInventorySystemComponent() const override;
 
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Item")
-	int32 GetMaxItemStacks();
+	virtual AActor* GetOwningActor() const override;
 
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Item")
-	int32 GetCurrentItemStacks();
+	virtual FGameplayTag GetItemType() const override;
 
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Item")
-	FGameplayTag GetItemType();
+	virtual FName GetItemName() const;
 
-	// Makes a struct of data about the item we can use in things like our UI
-	UFUNCTION(BlueprintPure , BlueprintCallable, Category = "Item Data")
-	FItemUIData MakeItemData();
+	virtual FText GetItemDescription() const;
+
+	virtual UTexture2D* GetItemImage() const;
+
+	virtual bool CanUse() const override;
+
+	virtual void Use() override;
+
+	virtual void Add(UInventorySystemComponent* InventorySystemComponent) override;
+
+	virtual void Remove() override;
+
+	virtual int GetCurrentStackCount() const override;
+
+	virtual bool IsStackable() const override;
+
+	virtual int GetMaxStackCount() const override;
 
 	UFUNCTION()
 	FOnCurrentStackCountChanged& GetOnCurrentStackCountChangedDelegate();
 
 	/** Adds Stacks to our current item
-	 * @param StacksToAdd : Amount of stacks we will be adding to our UItem
+	 * @param StacksToAdd : Amount of stacks we will be adding to our Item
 	*/
 	UFUNCTION()
-	void AddStacks(int32 StacksToAdd);
-	
+	virtual void AddStacks(int32 StacksToAdd) override;
+
+	/** Removes Stacks from our current item
+	 * @param StacksToRemove : Amount of stacks we will try removing from our Item.
+	 */
+	UFUNCTION()
+	virtual void RemoveStacks(int32 StacksToRemove) override;
 };

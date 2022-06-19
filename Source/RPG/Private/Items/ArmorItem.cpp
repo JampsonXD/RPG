@@ -12,22 +12,35 @@ UArmorItem::UArmorItem(const class FObjectInitializer& ObjectInitializer) : Supe
 	EquipSlot = EArmorEquipSlot::None;
 }
 
-bool UArmorItem::Use_Implementation(UInventorySystemComponent* TargetInventorySystemComponent, AActor* TargetActor)
+bool UArmorItem::CanUse() const
 {
-	ARPG_Character* TargetCharacter =  Cast<ARPG_Character>(TargetActor);
-	if(!TargetCharacter)
+	return K2_CanUse();
+}
+
+void UArmorItem::Use()
+{
+	ARPG_Character* TargetCharacter = GetOwningInventorySystemComponent() ? Cast<ARPG_Character>(GetOwningInventorySystemComponent()->GetAvatarActor()) : nullptr;
+
+	if (!TargetCharacter)
 	{
-		return false;
+		return;
 	}
 
-	// Check if we have the item equipped already and unequip
-	if (TargetCharacter->IsEquipped(this))
+	TargetCharacter->IsEquipped(this) ? TargetCharacter->UnequipArmor(this) : TargetCharacter->TryEquipArmor(this);
+	K2_Use(GetOwningInventorySystemComponent(), GetOwningActor());
+}
+
+void UArmorItem::Remove()
+{
+	ARPG_Character* TargetCharacter = GetOwningInventorySystemComponent() ? Cast<ARPG_Character>(GetOwningInventorySystemComponent()->GetAvatarActor()) : nullptr;
+
+	if (!TargetCharacter)
 	{
-		TargetCharacter->UnequipArmor(this);
-		return true;
+		return;
 	}
 
-	return TargetCharacter->TryEquipArmor(this);
+	TargetCharacter->UnequipArmor(this);
+	K2_Use(GetOwningInventorySystemComponent(), GetOwningActor());
 }
 
 USkeletalMesh* UArmorItem::GetArmorMesh() const

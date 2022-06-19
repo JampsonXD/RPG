@@ -8,12 +8,22 @@
 UInventorySystemComponent::UInventorySystemComponent(const class FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	// Initialize as Unlimited Inventory Size
-	MaxInventorySize = -1;
+	InventoryLimit = -1;
 	PrimaryComponentTick.bCanEverTick = true;
 	OwningActor = GetOwner();
 	AvatarActor = nullptr;
 }
 
+
+AActor* UInventorySystemComponent::GetOwningActor() const
+{
+	return OwningActor;
+}
+
+AActor* UInventorySystemComponent::GetAvatarActor() const
+{
+	return AvatarActor;
+}
 
 bool UInventorySystemComponent::AddItem(TSubclassOf<UItem> Item, int32 StacksToGrant)
 {
@@ -53,10 +63,16 @@ bool UInventorySystemComponent::AddItem(TSubclassOf<UItem> Item, int32 StacksToG
 	return bAddedItems;
 }
 
+bool UInventorySystemComponent::AddItemWithItemData(FInventoryItemData ItemData)
+{
+	return AddItem(ItemData.ItemClass, ItemData.StackCount);
+}
+
 void UInventorySystemComponent::CreateItemInstance(TSubclassOf<UItem> Item, int32& StacksToGrant)
 {
 	// Create a new Item Instance
 	UItem* NewItem = NewObject<UItem>(this, Item);
+	NewItem->Add(this);
 	InventoryItems.Add(NewItem);
 	
 	// Only add one stack if our item is not stackable
@@ -81,11 +97,20 @@ void UInventorySystemComponent::CreateItemInstance(TSubclassOf<UItem> Item, int3
 
 void UInventorySystemComponent::InitInventorySystemComponent()
 {
-	// Add Default Inventory Items to our Inventory
-	for(const TSubclassOf<UItem> Item : DefaultInventoryItems)
+	/* If our inventory is not unlimited or 0, reserve space based on our max inventory size */
+	if(InventoryLimit > 0)
 	{
-		AddItem(Item, 1);
+		InventoryItems.Reserve(InventoryLimit);
 	}
+
+	// Add Default Inventory Items to our Inventory
+	for(const FInventoryItemData& Item : DefaultInventoryItemData)
+	{
+		AddItemWithItemData(Item);
+	}
+
+	// Set our Inventory Size Limit after, letting us drop items if we are above the max
+	SetInventoryLimit(InventoryLimit, true);
 }
 
 bool UInventorySystemComponent::GetInventoryItems(FGameplayTag Type, TArray<UItem*>& OutItems) const
@@ -122,7 +147,7 @@ bool UInventorySystemComponent::TryGetItemWithStackCount(int32 StackCount, UItem
 {
 	return QueryInventoryForItem([StackCount](UItem* Item)
 	{
-		return Item->GetCurrentItemStacks() == StackCount;
+		return Item->GetCurrentStackCount() == StackCount;
 	}, OutItem);
 }
 
@@ -177,13 +202,34 @@ bool UInventorySystemComponent::TryUsingInventoryItem(UItem* Item)
 		return false;
 	}
 	
-	return Item->Use(this, AvatarActor);
+	if(Item->CanUse())
+	{
+		FItemUseData ItemUseData = FItemUseData(this, AvatarActor);
+		Item->Use();
+		return true;
+	}
+
+	return false;
 }
 
 void UInventorySystemComponent::InitActorInfo(AActor* InOwningActor, AActor* InAvatarActor)
 {
 	OwningActor = InOwningActor;
 	AvatarActor = InAvatarActor;
+}
+
+void UInventorySystemComponent::SetInventoryLimit(int NewLimitSize, bool bDropItemsOverLimit)
+{
+	const int OldLimitSize = InventoryLimit;
+	InventoryLimit = NewLimitSize;
+
+	FItemUseData ItemUseData = FItemUseData(this, AvatarActor);
+
+	for(int i = InventoryItems.Num(); i > InventoryLimit; i--)
+	{
+		InventoryItems[i]->Remove();
+		InventoryItems.RemoveAtSwap(i);
+	}
 }
 
 bool UInventorySystemComponent::ContainsValidItemOfClass(const TSubclassOf<UItem>& Item, TArray<UItem*>& OutItemsFound)
@@ -227,17 +273,17 @@ bool UInventorySystemComponent::AddAvailableStacksToItem(int32& StacksToGrant, U
 	return false;
 }
 
-int32 UInventorySystemComponent::GetAvailableStackCount(UItem* Item)
+int32 UInventorySystemComponent::GetAvailableStackCount(const UItem* Item)
 {
-	return Item->GetMaxItemStacks() - Item->GetCurrentItemStacks();
+	return Item->GetMaxStackCount() - Item->GetCurrentStackCount();
 }
 
 bool UInventorySystemComponent::HasUnlimitedInventorySize() const
 {
-	return MaxInventorySize == -1;
+	return InventoryLimit == -1;
 }
 
 bool UInventorySystemComponent::IsInventoryFull() const
 {
-	return InventoryItems.Num() >= MaxInventorySize && !HasUnlimitedInventorySize();
+	return InventoryItems.Num() >= InventoryLimit && !HasUnlimitedInventorySize();
 }

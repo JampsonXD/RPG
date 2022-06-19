@@ -27,11 +27,16 @@ protected:
 	EArmorEquipSlot EquipSlot;
 
 public:
-	virtual bool Use_Implementation(UInventorySystemComponent* TargetInventorySystemComponent, AActor* TargetActor) override;
+
+	virtual bool CanUse() const override;
+
+	virtual void Use() override;
+
+	virtual void Remove() override;
 	
 	// Gets our Armor Mesh pointer
-	USkeletalMesh* GetArmorMesh() const;
+	virtual USkeletalMesh* GetArmorMesh() const;
 
 	// Gets our equip slot type
-	EArmorEquipSlot GetEquipSlot() const;
+	virtual EArmorEquipSlot GetEquipSlot() const;
 };

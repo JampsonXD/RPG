@@ -10,6 +10,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemAdded, UItem*, NewItem);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemRemoved, UItem*, OldItem);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemStackCountChanged, UItem*, Item, float, NewStackCount, float, OldStackCount);
 DECLARE_DYNAMIC_DELEGATE_RetVal_OneParam(bool, FItemQuery, UItem*, Item);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -34,14 +35,14 @@ protected:
 
 	/** Maximum size of our components inventory **/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory System Component")
-	int32 MaxInventorySize;
+	int32 InventoryLimit;
 	
 	/* Array of Item Classes to grant our Component when initialized
 	adding one or more of the same class will add a new item or update the existing
 	stack count of an item based on its stackable setting
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory System Component | Defaults")
-	TArray<TSubclassOf<UItem>> DefaultInventoryItems;
+	TArray<FInventoryItemData> DefaultInventoryItemData;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnItemAdded OnItemAdded;
@@ -49,8 +50,17 @@ protected:
 	UPROPERTY(BlueprintAssignable)
 	FOnItemRemoved OnItemRemoved;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnItemStackCountChanged OnItemStackCountChanged;
+
 public:
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component")
+	AActor* GetOwningActor() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component")
+	AActor* GetAvatarActor() const;
+
 	/** Tries adding an item of class to our inventory
 	 * @param Item : The item class to add
 	 *  @param StacksToGrant : The amount of the item we want to try to add
@@ -58,6 +68,9 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Items")
 	bool AddItem(TSubclassOf<UItem> Item, int32 StacksToGrant = 1);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Items")
+	bool AddItemWithItemData(FInventoryItemData ItemData);
 
 	/** Initializes our Default Inventory Items
 	 */
@@ -93,6 +106,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Initialize")
 	void InitActorInfo(AActor* InOwningActor, AActor* InAvatarActor);
 
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component")
+	void SetInventoryLimit(int NewLimitSize, bool bDropItemsOverLimit = false);
+
 protected:
 
 	UFUNCTION()
@@ -125,7 +141,7 @@ protected:
 	 * @param Item : Item to get available stacks from 
 	 */
 	UFUNCTION()
-	static int32 GetAvailableStackCount(UItem* Item);
+	static int32 GetAvailableStackCount(const UItem* Item);
 	
 	UFUNCTION()
 	bool HasUnlimitedInventorySize() const;

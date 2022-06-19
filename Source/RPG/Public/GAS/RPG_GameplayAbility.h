@@ -15,10 +15,20 @@ class RPG_API URPG_GameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
 
+
+	UPROPERTY()
+	ARPG_Character* RPGCharacter;
+
+	UPROPERTY()
+	URPG_AbilitySystemComponent* RPGAbilitySystemComponent;
+
+
 public:
 
 	// Getter for our InputID
 	enum EAbilityInput GetInputID() const;
+
+protected:
 	
 	UFUNCTION(BlueprintCallable, Category = "Gameplay Effect Container")
 	FGameplayEffectContainerSpec MakeEffectContainerSpecFromContainer(const FGameplayEffectContainer& Container, const FGameplayEventData& EventData, int AbilityLevel = -1);
@@ -48,6 +58,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "RPG Gameplay Ability | Camera")
 	void RemoveCameraEffectFromOwner(UParticleSystemComponent* ParticleSystemComponent);
+
+	UFUNCTION(BlueprintPure, Category = "RPG Gameplay Ability")
+	ARPG_Character* GetRPGCharacter() const;
+
+	UFUNCTION(BlueprintPure, Category = "RPG Gameplay Ability")
+	URPG_AbilitySystemComponent* GetRPGAbilitySystemComponent() const;
 
 protected:
 	

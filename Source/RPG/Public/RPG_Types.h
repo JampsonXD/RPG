@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InventorySystemComponent.h"
 #include "GAS/GAS_Types.h"
 #include "GAS/Calculations/RPG_DamageMitigationCalculations.h"
 #include "RPG_Types.generated.h"
@@ -26,7 +27,16 @@ enum class EWeaponEquipSlot : uint8
 {
 	None,
 	RightHand,
-	LeftHand
+	LeftHand,
+	BothHands
+};
+
+UENUM()
+enum class EGunFireMode : uint8
+{
+	SemiAutomatic,
+	Automatic,
+	BurstFire
 };
 
 USTRUCT(BlueprintType)
@@ -123,4 +133,32 @@ struct FDamageTypeData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Damage Type Data")
 	TSubclassOf<URPG_DamageMitigationCalculations> DamageMitigationMod;
 	
+};
+
+
+class URPG_SuperWeapon;
+
+USTRUCT()
+struct FItemActorData
+{
+	GENERATED_BODY()
+
+	FItemActorData() : WeaponObject(nullptr), InventorySystemComponent(nullptr), OwningActor(nullptr) {}
+	FItemActorData(URPG_SuperWeapon* InWeaponObject, UInventorySystemComponent* InInventorySystemComponent)
+	{
+		WeaponObject = InWeaponObject;
+		InventorySystemComponent = InInventorySystemComponent;
+		OwningActor = InInventorySystemComponent ? InInventorySystemComponent->OwningActor : nullptr;
+	}
+
+	bool operator==(const FItemActorData& Other) const { return WeaponObject == Other.WeaponObject && InventorySystemComponent == Other.InventorySystemComponent && OwningActor == Other.OwningActor;  }
+	bool operator!=(const FItemActorData& Other) const { return !(*this == Other); }
+
+	URPG_SuperWeapon* WeaponObject;
+
+	UInventorySystemComponent* InventorySystemComponent;
+
+	AActor* OwningActor;
+
+	bool IsValid() const { return WeaponObject && InventorySystemComponent && OwningActor; }
 };

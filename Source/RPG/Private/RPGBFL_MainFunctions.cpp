@@ -3,6 +3,20 @@
 
 #include "RPGBFL_MainFunctions.h"
 
+int URPGBFL_MainFunctions::AppendUnique(const TArray<UProperty*>& TargetArray, UPARAM(ref)TArray<UProperty*>& OutArray)
+{
+	int UniqueCount = 0;
+	for(UProperty* Property : TargetArray)
+	{
+		if(OutArray.AddUnique(Property) > 0)
+		{
+			UniqueCount++;
+		}
+	}
+
+	return UniqueCount;
+}
+
 bool URPGBFL_MainFunctions::GetFirstActorOfClassOrFirstActor(TArray<AActor*> ActorArray,
                                                              TSubclassOf<AActor> ActorFilter, AActor*& FoundActor)
 {
