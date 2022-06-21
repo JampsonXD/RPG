@@ -3,16 +3,32 @@
 
 #include "UI/RPGBFL_UIFunctions.h"
 
-FItemUIData URPGBFL_UIFunctions::MakeItemUIData(const UItem* Item)
+#include "InventorySystemComponent.h"
+
+FItemUIData URPGBFL_UIFunctions::MakeItemUIData(const FInventorySlot& InventorySlot)
 {
+	if(!InventorySlot.IsValid())
+	{
+		return FItemUIData();
+	}
+
 	FItemUIData ItemData = FItemUIData();
 
-	ItemData.CurrentStackCount = Item->GetCurrentStackCount();
-	ItemData.MaxStackCount = Item->GetMaxStackCount();
-	ItemData.ItemName = Item->GetItemName();
-	ItemData.ItemImage = Item->GetItemImage();
-	ItemData.ItemDescription = Item->GetItemDescription();
-	ItemData.bIsStackable = Item->IsStackable();
+	ItemData.CurrentStackCount = InventorySlot.StackCount;
+	ItemData.MaxStackCount = InventorySlot.Item->GetMaxStackCount();
+	ItemData.ItemName = InventorySlot.Item->GetItemName();
+	ItemData.ItemImage = InventorySlot.Item->GetItemImage();
+	ItemData.ItemDescription = InventorySlot.Item->GetItemDescription();
+	ItemData.bIsStackable = InventorySlot.Item->IsStackable();
 
 	return ItemData;
+}
+
+FItemUIData URPGBFL_UIFunctions::GetItemUIDataFromInventorySlotData(const UInventorySystemComponent* ISC,
+	const FInventorySlot& InventorySlot)
+{
+	FInventorySlot TempSlot;
+	ISC->GetItemById(InventorySlot.GetGuid(), TempSlot);
+
+	return MakeItemUIData(TempSlot);
 }

@@ -12,37 +12,6 @@ UArmorItem::UArmorItem(const class FObjectInitializer& ObjectInitializer) : Supe
 	EquipSlot = EArmorEquipSlot::None;
 }
 
-bool UArmorItem::CanUse() const
-{
-	return K2_CanUse();
-}
-
-void UArmorItem::Use()
-{
-	ARPG_Character* TargetCharacter = GetOwningInventorySystemComponent() ? Cast<ARPG_Character>(GetOwningInventorySystemComponent()->GetAvatarActor()) : nullptr;
-
-	if (!TargetCharacter)
-	{
-		return;
-	}
-
-	TargetCharacter->IsEquipped(this) ? TargetCharacter->UnequipArmor(this) : TargetCharacter->TryEquipArmor(this);
-	K2_Use(GetOwningInventorySystemComponent(), GetOwningActor());
-}
-
-void UArmorItem::Remove()
-{
-	ARPG_Character* TargetCharacter = GetOwningInventorySystemComponent() ? Cast<ARPG_Character>(GetOwningInventorySystemComponent()->GetAvatarActor()) : nullptr;
-
-	if (!TargetCharacter)
-	{
-		return;
-	}
-
-	TargetCharacter->UnequipArmor(this);
-	K2_Use(GetOwningInventorySystemComponent(), GetOwningActor());
-}
-
 USkeletalMesh* UArmorItem::GetArmorMesh() const
 {
 	return ArmorMesh;

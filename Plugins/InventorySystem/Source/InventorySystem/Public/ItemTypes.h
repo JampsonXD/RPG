@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Item.h"
 #include "ItemTypes.generated.h"
 
 class UInventorySystemComponent;
@@ -12,45 +13,55 @@ class UItem;
  * 
  */
 
-USTRUCT()
-struct FItemUseData
+USTRUCT(BlueprintType)
+struct FInventorySlot
 {
 	GENERATED_BODY()
+	
+	FInventorySlot()
+	{
+		Item = nullptr;
+		StackCount = -1;
+		Id = FGuid();
+	}
 
-	FItemUseData() : ISC(nullptr), AvatarActor(nullptr) {}
-	FItemUseData(UInventorySystemComponent* InISC, AActor* InAvatarActor) : ISC(InISC), AvatarActor(InAvatarActor) {}
-	virtual ~FItemUseData() {}
+	FInventorySlot(UItem* InItem, int InStackCount = 1)
+	{
+		Item = InItem;
+		StackCount = InStackCount;
+		Id = FGuid();
+	}
 
+	FORCEINLINE bool operator ==(const FInventorySlot& OtherSlot) const { return this->Id == OtherSlot.Id; }
+	FORCEINLINE bool operator !=(const FInventorySlot& OtherSlot) const { return !(*this == OtherSlot); }
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UItem* Item;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int StackCount;
+
+	bool IsValid() const { return Item && StackCount > 0 && Id.IsValid();  }
+	// Checks if we have a valid Item class and stacks, but does not check for our Id
+	bool IsValidNonGenerated() const { return Item && StackCount > 0; }
+	int GetMaxStackCount() const { return Item ? Item->GetMaxStackCount() : 0;  }
+	int GetOpenStackCount() const { return GetMaxStackCount() - StackCount;  }
+	bool IsFilledSlot() const { return StackCount >= GetMaxStackCount();  }
+	void GenerateGuidId() { Id = FGuid::NewGuid(); }
+	FGuid GetGuid() const { return Id; }
+
+	private:
 	UPROPERTY()
-	UInventorySystemComponent* ISC;
-
-	UPROPERTY()
-	AActor* AvatarActor;
+	FGuid Id;
 };
 
-class UItem;
-USTRUCT(BlueprintType)
-struct FInventoryItemData
+UENUM(BlueprintType)
+enum class EInventorySlotChangeType : uint8
 {
-	GENERATED_BODY()
-
-	FInventoryItemData()
-	{
-		ItemClass = nullptr;
-		StackCount = 1;
-	}
-
-	FInventoryItemData(TSubclassOf<UItem> InItemClass, int InStackCount)
-	{
-		ItemClass = InItemClass;
-		StackCount = InStackCount;
-	}
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item Data")
-	TSubclassOf<UItem> ItemClass;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item Data")
-	int StackCount;
+	None,
+	Removed,
+	Added,
+	StackChange
 };
 
 USTRUCT(BlueprintType)
@@ -85,7 +96,7 @@ struct FItemUIData
 	FText ItemDescription;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Item | Info")
-	class UTexture2D* ItemImage;
+	UTexture2D* ItemImage;
 
 	// Whether this item can be stacked or not, defaults to false
 	UPROPERTY(BlueprintReadOnly, Category = "Item")

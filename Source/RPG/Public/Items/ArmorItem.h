@@ -27,12 +27,6 @@ protected:
 	EArmorEquipSlot EquipSlot;
 
 public:
-
-	virtual bool CanUse() const override;
-
-	virtual void Use() override;
-
-	virtual void Remove() override;
 	
 	// Gets our Armor Mesh pointer
 	virtual USkeletalMesh* GetArmorMesh() const;

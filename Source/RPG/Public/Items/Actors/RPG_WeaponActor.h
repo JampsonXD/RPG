@@ -39,7 +39,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
-	virtual void InitializeWeapon(const FItemActorData& ItemData);
+	virtual void InitializeWeapon();
 
 	UFUNCTION(BlueprintPure)
 	virtual USkeletalMeshComponent* GetWeaponMesh() const;

@@ -26,16 +26,9 @@ void ARPG_WeaponActor::Tick(float DeltaTime)
 
 }
 
-void ARPG_WeaponActor::InitializeWeapon(const FItemActorData& ItemData)
+void ARPG_WeaponActor::InitializeWeapon()
 {
-	WeaponData = ItemData.WeaponObject;
-	InventorySystemComponent = ItemData.InventorySystemComponent;
-	OwningActor = ItemData.OwningActor;
 
-	if(WeaponData->GetWeaponMesh())
-	{
-		WeaponMesh->SetSkeletalMesh(WeaponData->GetWeaponMesh());
-	}
 }
 
 USkeletalMeshComponent* ARPG_WeaponActor::GetWeaponMesh() const

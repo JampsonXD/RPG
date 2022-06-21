@@ -30,21 +30,6 @@ void URPG_SuperItem::AddAbilitySet(UAbilitySystemComponent* AbilitySystemCompone
 	ItemAbilitySetHandle = ItemAbilitySet->AddAbilitySet(AbilitySystemComponent, this);
 }
 
-bool URPG_SuperItem::CanUse() const
-{
-	return Super::CanUse();
-}
-
-void URPG_SuperItem::Use()
-{
-	K2_Use(GetOwningInventorySystemComponent(), GetOwningActor());
-}
-
-void URPG_SuperItem::Remove()
-{
-	K2_Remove(GetOwningInventorySystemComponent(), GetOwningActor());
-}
-
 void URPG_SuperItem::RemoveAbilitySet()
 {
 	ItemAbilitySetHandle.Remove();

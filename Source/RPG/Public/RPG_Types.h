@@ -134,31 +134,3 @@ struct FDamageTypeData
 	TSubclassOf<URPG_DamageMitigationCalculations> DamageMitigationMod;
 	
 };
-
-
-class URPG_SuperWeapon;
-
-USTRUCT()
-struct FItemActorData
-{
-	GENERATED_BODY()
-
-	FItemActorData() : WeaponObject(nullptr), InventorySystemComponent(nullptr), OwningActor(nullptr) {}
-	FItemActorData(URPG_SuperWeapon* InWeaponObject, UInventorySystemComponent* InInventorySystemComponent)
-	{
-		WeaponObject = InWeaponObject;
-		InventorySystemComponent = InInventorySystemComponent;
-		OwningActor = InInventorySystemComponent ? InInventorySystemComponent->OwningActor : nullptr;
-	}
-
-	bool operator==(const FItemActorData& Other) const { return WeaponObject == Other.WeaponObject && InventorySystemComponent == Other.InventorySystemComponent && OwningActor == Other.OwningActor;  }
-	bool operator!=(const FItemActorData& Other) const { return !(*this == Other); }
-
-	URPG_SuperWeapon* WeaponObject;
-
-	UInventorySystemComponent* InventorySystemComponent;
-
-	AActor* OwningActor;
-
-	bool IsValid() const { return WeaponObject && InventorySystemComponent && OwningActor; }
-};

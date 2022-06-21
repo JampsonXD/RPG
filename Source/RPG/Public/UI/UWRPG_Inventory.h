@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Item.h"
+#include "ItemTypes.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/VerticalBox.h"
 #include "UWRPG_Inventory.generated.h"
@@ -26,18 +27,27 @@ protected:
 
 	/* Map for getting the inventory slot an item references */
 	UPROPERTY()
-	TMap<UItem*, UUWRPG_InventorySlot*> ItemInventorySlotMap;
+	TMap<FGuid, UUWRPG_InventorySlot*> ItemInventorySlotMap;
 
 	UPROPERTY(BlueprintReadOnly)
 	UInventorySystemComponent* InventorySystemComponent;
 
 	void SetInventorySystemComponent(UInventorySystemComponent* ISC) { InventorySystemComponent = ISC; }
 
+	UFUNCTION()
+	void OnInventoryItemChanged(FInventorySlot InventorySlot, EInventorySlotChangeType ChangeType);
+
 	UFUNCTION(BlueprintCallable, Category = "RPG UI | Inventory")
-	void AddItemToInventoryWidget(UItem* NewItem);
+	void AddItemToInventoryWidget(FInventorySlot& InventorySlot);
 
 	UFUNCTION()
-	void RemoveItemFromInventoryWidget(UItem* OldItem);
+	void RemoveItemFromInventoryWidget(const FInventorySlot& InventorySlot);
+
+	UFUNCTION()
+	void UpdateInventorySlotStackCount(FInventorySlot& InventorySlot);
+
+	UFUNCTION()
+	UUWRPG_InventorySlot* GetMapValueFromInventorySlot(const FInventorySlot& InventorySlot);
 
 	virtual void BeginDestroy() override;
 	

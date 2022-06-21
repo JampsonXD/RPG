@@ -3,18 +3,6 @@
 
 #include "InventorySystemComponent.h"
 
-
-// Sets default values for this component's properties
-UInventorySystemComponent::UInventorySystemComponent(const class FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
-{
-	// Initialize as Unlimited Inventory Size
-	InventoryLimit = -1;
-	PrimaryComponentTick.bCanEverTick = true;
-	OwningActor = GetOwner();
-	AvatarActor = nullptr;
-}
-
-
 AActor* UInventorySystemComponent::GetOwningActor() const
 {
 	return OwningActor;
@@ -25,74 +13,81 @@ AActor* UInventorySystemComponent::GetAvatarActor() const
 	return AvatarActor;
 }
 
-bool UInventorySystemComponent::AddItem(TSubclassOf<UItem> Item, int32 StacksToGrant)
+bool UInventorySystemComponent::AddInventoryItem(UItem* Item, int StackCount)
 {
-	// Make sure we are actually adding an amount or have a valid Item Class
-	if(StacksToGrant <= 0 || !IsValid(Item))
+	if(!Item || StackCount <= 0)
 	{
 		return false;
 	}
-	
-	TArray<UItem*> ValidItems;
+
+	const bool bIsStackable = Item->IsStackable();
 	bool bAddedItems = false;
 
-	// Check if we are a stackable item and already have items of the same type
-	if(Cast<UItem>(Item->GetDefaultObject())->IsStackable() && ContainsValidItemOfClass(Item,ValidItems))
+	// Check if we have any open slots from current items to add our stacks to
+	TArray<FInventorySlot*> OpenSlots;
+	if(bIsStackable && GetOpenInventorySlotsFromItem(Item, OpenSlots))
 	{
 		bAddedItems = true;
-		AddStacksToItems(ValidItems, StacksToGrant);
+		for(FInventorySlot*& InventorySlot : OpenSlots)
+		{
+			const int StacksToAdd = FMath::Min(InventorySlot->GetOpenStackCount(), StackCount);
+			InventorySlot->StackCount += StacksToAdd;
+			OnItemChanged.Broadcast(*InventorySlot, EInventorySlotChangeType::StackChange);
+			StackCount -= StacksToAdd;
+
+			if(StackCount <= 0)
+			{
+				return bAddedItems;
+			}
+		}
 	}
-	
-	// We have no stacks to update left or we have no inventory space
-	if(StacksToGrant <= 0 || IsInventoryFull())
+
+	// Don't try to add items if our inventory is already full
+	if(IsInventoryFull())
 	{
 		return bAddedItems;
 	}
 
-	// We have space and are going to at least create one instance of UItem so change
-	// our boolean to true
+	// We are going to create atleast one instance of an inventory slot so we can change to true
 	bAddedItems = true;
-	
-	// Continue creating item instances from class until we have no stacks to give left or our inventory is full
-	while(!IsInventoryFull() && StacksToGrant > 0)
+
+	while(StackCount > 0 && !IsInventoryFull())
 	{
-		// Create an Item Instance and Re-Evaluate if we have stacks leftover
-		CreateItemInstance(Item, StacksToGrant);
+		const int Stacks = FMath::Min(Item->GetMaxStackCount(), StackCount);
+		FInventorySlot NewSlot = FInventorySlot(Item, Stacks);
+		AddInventoryItemSlot(NewSlot);
+		StackCount -= Stacks;
 	}
 	
+
 	return bAddedItems;
 }
 
-bool UInventorySystemComponent::AddItemWithItemData(FInventoryItemData ItemData)
+void UInventorySystemComponent::AddInventoryItemSlot(FInventorySlot& InventorySlot)
 {
-	return AddItem(ItemData.ItemClass, ItemData.StackCount);
+	InventorySlot.GenerateGuidId();
+	InventoryItems.Add(InventorySlot);
+	OnItemChanged.Broadcast(InventorySlot, EInventorySlotChangeType::Added);
 }
 
-void UInventorySystemComponent::CreateItemInstance(TSubclassOf<UItem> Item, int32& StacksToGrant)
+bool UInventorySystemComponent::TryRemoveItem(const FGuid FGuid, int32 StacksToRemove)
 {
-	// Create a new Item Instance
-	UItem* NewItem = NewObject<UItem>(this, Item);
-	NewItem->Add(this);
-	InventoryItems.Add(NewItem);
-	
-	// Only add one stack if our item is not stackable
-	if(!NewItem->IsStackable())
+	FInventorySlot InventorySlot;
+	if(!GetItemById(FGuid, InventorySlot))
 	{
-		NewItem->AddStacks(1);
-		StacksToGrant -= 1;
+		return false;
 	}
 
-	// Add all available stacks if our item is stackable
-	if(NewItem->IsStackable())
+	InventorySlot.StackCount -= StacksToRemove;
+	if(InventorySlot.StackCount <= 0)
 	{
-		AddAvailableStacksToItem(StacksToGrant, NewItem);
+		OnItemChanged.Broadcast(InventorySlot, EInventorySlotChangeType::Removed);
+		InventoryItems.Remove(InventorySlot);
+		return true;
 	}
 
-	// Broadcast that we have a new item added to our Inventory
-	if(OnItemAdded.IsBound())
-	{
-		OnItemAdded.Broadcast(NewItem);
-	}
+	OnItemChanged.Broadcast(InventorySlot, EInventorySlotChangeType::StackChange);
+	return true;
 }
 
 void UInventorySystemComponent::InitInventorySystemComponent()
@@ -104,112 +99,67 @@ void UInventorySystemComponent::InitInventorySystemComponent()
 	}
 
 	// Add Default Inventory Items to our Inventory
-	for(const FInventoryItemData& Item : DefaultInventoryItemData)
+	for(FInventorySlot InventorySlot : DefaultInventoryItemData)
 	{
-		AddItemWithItemData(Item);
+		InventorySlot.StackCount = FMath::Min(InventorySlot.Item->GetMaxStackCount(), InventorySlot.StackCount);
+		AddInventoryItemSlot(InventorySlot);
 	}
 
 	// Set our Inventory Size Limit after, letting us drop items if we are above the max
 	SetInventoryLimit(InventoryLimit, true);
 }
 
-bool UInventorySystemComponent::GetInventoryItems(FGameplayTag Type, TArray<UItem*>& OutItems) const
+bool UInventorySystemComponent::GetInventoryItems(FGameplayTag Type, TArray<FInventorySlot>& OutInventorySlots) const
 {
 	// Return our whole Inventory Items Array if we aren't filtering
 	if(Type == FGameplayTag::EmptyTag)
 	{
-		OutItems.Append(InventoryItems);
+		OutInventorySlots.Append(InventoryItems);
 		return true;
 	}
 	
-	for(UItem* Item : InventoryItems)
+	for(const FInventorySlot& InventorySlot : InventoryItems)
 	{
-		if(Item->GetItemType().MatchesTag(Type))
+		if(InventorySlot.Item->GetItemType() == Type)
 		{
-			OutItems.Add(Item);
+			OutInventorySlots.Add(InventorySlot);
 		}
 	}
 
-	return OutItems.Num() > 0 ? true : false;
+	return OutInventorySlots.Num() > 0 ? true : false;
 }
 
-FOnItemAdded& UInventorySystemComponent::GetOnItemAddedDelegate()
+bool UInventorySystemComponent::GetItemById(const FGuid Guid, FInventorySlot& OutItem) const
 {
-	return OnItemAdded;
-}
-
-FOnItemRemoved& UInventorySystemComponent::GetOnItemRemovedDelegate()
-{
-	return OnItemRemoved;
-}
-
-bool UInventorySystemComponent::TryGetItemWithStackCount(int32 StackCount, UItem*& OutItem)
-{
-	return QueryInventoryForItem([StackCount](UItem* Item)
+	for (const FInventorySlot& InventorySlot : InventoryItems)
 	{
-		return Item->GetCurrentStackCount() == StackCount;
-	}, OutItem);
-}
-
-bool UInventorySystemComponent::QueryInventoryForItem(FItemQuery Query, UItem*& OutItem)
-{
-	for(UItem*& CurrentItem : InventoryItems)
-	{
-		if(Query.Execute(CurrentItem))
+		if (Guid == InventorySlot.GetGuid())
 		{
-			OutItem = CurrentItem;
+			OutItem = InventorySlot;
 			return true;
 		}
 	}
 
+	OutItem = FInventorySlot();
 	return false;
 }
 
-bool UInventorySystemComponent::QueryInventoryForItems(FItemQuery Query, TArray<UItem*>& OutItems)
+bool UInventorySystemComponent::GetOpenInventorySlotsFromItem(const UItem* Item, TArray<FInventorySlot*>& InventorySlots)
 {
-	TArray<UItem*> MatchingItems;
-	for(UItem*& CurrentItem : InventoryItems)
+	for(FInventorySlot& InventorySlot : InventoryItems)
 	{
-		if(Query.Execute(CurrentItem))
+		if(Item == InventorySlot.Item && !InventorySlot.IsFilledSlot())
 		{
-			MatchingItems.Add(CurrentItem);
+			InventorySlots.Add(&InventorySlot);
 		}
 	}
 
-	OutItems.Append(MatchingItems);
-	return !MatchingItems.IsEmpty();
+	return InventorySlots.Num() > 0;
 }
 
-bool UInventorySystemComponent::QueryInventoryForItem(TFunction<bool(UItem* Item)> Query, UItem*& OutItem)
+FOnItemChanged& UInventorySystemComponent::GetOnItemChangedDelegate()
 {
-	for(UItem*& CurrentItem : InventoryItems)
-	{
-		if(Query(CurrentItem))
-		{
-			OutItem = CurrentItem;
-			return true;
-		}
-	}
-
-	OutItem = nullptr;
-	return false;
-}
-
-bool UInventorySystemComponent::TryUsingInventoryItem(UItem* Item)
-{
-	if(!Item)
-	{
-		return false;
-	}
-	
-	if(Item->CanUse())
-	{
-		FItemUseData ItemUseData = FItemUseData(this, AvatarActor);
-		Item->Use();
-		return true;
-	}
-
-	return false;
+	return OnItemChanged;
 }
 
 void UInventorySystemComponent::InitActorInfo(AActor* InOwningActor, AActor* InAvatarActor)
@@ -223,67 +173,19 @@ void UInventorySystemComponent::SetInventoryLimit(int NewLimitSize, bool bDropIt
 	const int OldLimitSize = InventoryLimit;
 	InventoryLimit = NewLimitSize;
 
-	FItemUseData ItemUseData = FItemUseData(this, AvatarActor);
-
 	for(int i = InventoryItems.Num(); i > InventoryLimit; i--)
 	{
-		InventoryItems[i]->Remove();
+		OnItemChanged.Broadcast(InventoryItems[i], EInventorySlotChangeType::Removed);
 		InventoryItems.RemoveAtSwap(i);
 	}
 }
 
-bool UInventorySystemComponent::ContainsValidItemOfClass(const TSubclassOf<UItem>& Item, TArray<UItem*>& OutItemsFound)
-{
-	for(UItem* InventoryItem : InventoryItems)
-	{
-		// Check if are InventoryItem is of the same class / is a stackable item / its current stacks are less than th max stacks allowed or it has unlimited stacks
-		if(InventoryItem->IsA(Item) && InventoryItem->IsStackable() && (GetAvailableStackCount(InventoryItem) > 0 || InventoryItem->HasUnlimitedStacks()))
-		{
-			OutItemsFound.Add(InventoryItem);
-		}
-	}
-
-	// If our items found is greater than 0 return true
-	return OutItemsFound.Num() > 0;
-}
-
-void UInventorySystemComponent::AddStacksToItems(TArray<UItem*>& Items, int32& StacksToGrant)
-{
-	// Iterate through our Items of the same type until we have no stacks to give or run out of items to update 
-	for(UItem* Item : Items)
-	{
-		// Returns true if we have no stacks leftover
-		if (AddAvailableStacksToItem(StacksToGrant, Item)) return;
-	}
-}
-
-bool UInventorySystemComponent::AddAvailableStacksToItem(int32& StacksToGrant, UItem* Item)
-{
-	const int32 AvailableStacks = GetAvailableStackCount(Item);
-
-	if(StacksToGrant - AvailableStacks <= 0 || Item->HasUnlimitedStacks())
-	{
-		Item->AddStacks(StacksToGrant);
-		StacksToGrant = 0;
-		return true;
-	}
-
-	Item->AddStacks(AvailableStacks);
-	StacksToGrant -= AvailableStacks;
-	return false;
-}
-
-int32 UInventorySystemComponent::GetAvailableStackCount(const UItem* Item)
-{
-	return Item->GetMaxStackCount() - Item->GetCurrentStackCount();
-}
-
-bool UInventorySystemComponent::HasUnlimitedInventorySize() const
-{
-	return InventoryLimit == -1;
-}
-
 bool UInventorySystemComponent::IsInventoryFull() const
 {
-	return InventoryItems.Num() >= InventoryLimit && !HasUnlimitedInventorySize();
+	return InventoryItems.Num() >= InventoryLimit;
+}
+
+int UInventorySystemComponent::GetOpenInventorySlotAmount() const
+{
+	return InventoryLimit - InventoryItems.Num();
 }

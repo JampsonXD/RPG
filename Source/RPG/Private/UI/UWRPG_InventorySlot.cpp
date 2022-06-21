@@ -3,28 +3,25 @@
 
 #include "UI/UWRPG_InventorySlot.h"
 
+#include "IDetailTreeNode.h"
+#include "ItemTypes.h"
+
 
 void UUWRPG_InventorySlot::BeginDestroy()
 {
-	if(Item)
-	{
-		Item->GetOnCurrentStackCountChangedDelegate().RemoveDynamic(this, &UUWRPG_InventorySlot::StackCountChanged);
-	}
-	
 	Super::BeginDestroy();
 }
 
-void UUWRPG_InventorySlot::SetupItemSlot(UItem* InItem, UInventorySystemComponent* ISC)
+void UUWRPG_InventorySlot::SetupInventorySlot(FInventorySlot& InInventorySlot, UInventorySystemComponent* ISC)
 {
-	SetItem(InItem);
+	SetInventorySlot(InInventorySlot);
 	SetInventorySystemComponent(ISC);
-	InItem->GetOnCurrentStackCountChangedDelegate().AddUniqueDynamic(this, &UUWRPG_InventorySlot::StackCountChanged);
-	K2_SetupItemSlot(InItem);
+	K2_SetupInventorySlot(InInventorySlot);
 }
 
-UItem* UUWRPG_InventorySlot::GetItem() const
+FInventorySlot UUWRPG_InventorySlot::GetInventorySlot() const
 {
-	return Item;
+	return InventorySlot;
 }
 
 UInventorySystemComponent* UUWRPG_InventorySlot::GetInventorySystemComponent() const
@@ -32,9 +29,9 @@ UInventorySystemComponent* UUWRPG_InventorySlot::GetInventorySystemComponent() c
 	return InventorySystemComponent;
 }
 
-void UUWRPG_InventorySlot::SetItem(UItem* const InItem)
+void UUWRPG_InventorySlot::SetInventorySlot(const FInventorySlot& InInventorySlot)
 {
-	Item = InItem;
+	InventorySlot = InInventorySlot;
 }
 
 void UUWRPG_InventorySlot::SetInventorySystemComponent(UInventorySystemComponent* ISC)
@@ -42,7 +39,7 @@ void UUWRPG_InventorySlot::SetInventorySystemComponent(UInventorySystemComponent
 	InventorySystemComponent = ISC;
 }
 
-void UUWRPG_InventorySlot::StackCountChanged(int OldStackCount, int NewStackCount)
+void UUWRPG_InventorySlot::StackCountChanged(int& NewStackCount)
 {
-	K2_StackCountChanged(OldStackCount, NewStackCount);
+	K2_StackCountChanged(NewStackCount);
 }

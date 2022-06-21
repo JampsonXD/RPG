@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Item.h"
+#include "ItemTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "RPGBFL_UIFunctions.generated.h"
 
@@ -19,5 +19,8 @@ class RPG_API URPGBFL_UIFunctions : public UBlueprintFunctionLibrary
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "RPG UI | Item Data")
-	static FItemUIData MakeItemUIData(const UItem* Item);
+	static FItemUIData MakeItemUIData(const FInventorySlot& InventorySlot);
+
+	UFUNCTION(BlueprintCallable, Category = "RPGBFL Main Functions")
+	static FItemUIData GetItemUIDataFromInventorySlotData(const UInventorySystemComponent* ISC, const FInventorySlot& InventorySlot);
 };
