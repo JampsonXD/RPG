@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ItemTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "BFL_Inventory.generated.h"
 
@@ -17,5 +18,8 @@ class INVENTORYSYSTEM_API UBFL_Inventory : public UBlueprintFunctionLibrary
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Inventory Helpers")
-    static class UInventorySystemComponent* GetInventorySystemComponent(AActor* InActor);	
+    static class UInventorySystemComponent* GetInventorySystemComponent(AActor* InActor);
+
+	UFUNCTION(BlueprintPure)
+	static FGuid GetItemGuid(FInventorySlot Item);
 };

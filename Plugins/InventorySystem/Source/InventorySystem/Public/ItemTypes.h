@@ -14,6 +14,63 @@ class UItem;
  */
 
 USTRUCT(BlueprintType)
+struct FEquippedSlot
+{
+	GENERATED_BODY()
+
+	bool operator==(const FEquippedSlot& Other) const
+	{
+		return SlotType.MatchesTagExact(Other.SlotType) && SlotNumber == Other.SlotNumber;
+	}
+
+	FEquippedSlot()
+	{
+		SlotType = FGameplayTag::EmptyTag;
+		SlotNumber = -1;
+	}
+
+	FEquippedSlot(FGameplayTag Tag, int InSlotNumber)
+	{
+		SlotType = Tag;
+		SlotNumber = InSlotNumber;
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag SlotType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int SlotNumber;
+
+	friend inline uint32 GetTypeHash(const FEquippedSlot& Key)
+	{
+		uint32 Hash = 0;
+		Hash = HashCombine(Hash, GetTypeHash(Key.SlotType));
+		Hash = HashCombine(Hash, static_cast<uint32>(Key.SlotNumber));
+		return Hash;
+	}
+
+	bool IsValid() const
+	{
+		return SlotType.IsValid() && SlotNumber >= 0;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FDefaultInventoryData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UItem* Item;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int StackCount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEquipOnAdded;
+};
+
+USTRUCT(BlueprintType)
 struct FInventorySlot
 {
 	GENERATED_BODY()
@@ -62,6 +119,14 @@ enum class EInventorySlotChangeType : uint8
 	Removed,
 	Added,
 	StackChange
+};
+
+UENUM(BlueprintType)
+enum class EEquipmentSlotChangeType : uint8
+{
+	None,
+	Added,
+	Removed
 };
 
 USTRUCT(BlueprintType)

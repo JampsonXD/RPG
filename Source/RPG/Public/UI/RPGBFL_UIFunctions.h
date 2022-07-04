@@ -22,5 +22,5 @@ public:
 	static FItemUIData MakeItemUIData(const FInventorySlot& InventorySlot);
 
 	UFUNCTION(BlueprintCallable, Category = "RPGBFL Main Functions")
-	static FItemUIData GetItemUIDataFromInventorySlotData(const UInventorySystemComponent* ISC, const FInventorySlot& InventorySlot);
+	static FItemUIData GetItemUIDataFromInventorySlotData(UInventorySystemComponent* ISC, UPARAM(ref) FInventorySlot& InventorySlot);
 };

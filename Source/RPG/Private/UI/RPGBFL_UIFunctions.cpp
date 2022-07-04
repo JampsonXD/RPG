@@ -24,8 +24,8 @@ FItemUIData URPGBFL_UIFunctions::MakeItemUIData(const FInventorySlot& InventoryS
 	return ItemData;
 }
 
-FItemUIData URPGBFL_UIFunctions::GetItemUIDataFromInventorySlotData(const UInventorySystemComponent* ISC,
-	const FInventorySlot& InventorySlot)
+FItemUIData URPGBFL_UIFunctions::GetItemUIDataFromInventorySlotData(UInventorySystemComponent* ISC,
+	FInventorySlot& InventorySlot)
 {
 	FInventorySlot TempSlot;
 	ISC->GetItemById(InventorySlot.GetGuid(), TempSlot);
