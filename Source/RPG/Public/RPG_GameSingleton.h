@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FXManager.h"
 #include "GameplayTagContainer.h"
 #include "RPG_Types.h"
 #include "UObject/NoExportTypes.h"
@@ -17,6 +18,9 @@ class RPG_API URPG_GameSingleton : public UObject
 	GENERATED_BODY()
 
 protected:
+
+	UPROPERTY()
+	UFXManager* FXManager;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Singleton")
 	TMap<FGameplayTag, FDamageTypeData> DamageTypeMap;
@@ -33,6 +37,11 @@ public:
 	 * @return Returns the instance of our Game Singleton as an URPG_GameSingleton if valid
 	 **/
 	static URPG_GameSingleton* GetSingleton();
+
+	/**
+	 * @return Returns our local instance of the Effect Manager
+	 */
+	UFXManager* GetFXManager();
 
 	/**
 	 * @return Returns a pointer to our Attribute Level Up Map

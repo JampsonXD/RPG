@@ -21,6 +21,17 @@ URPG_GameSingleton* URPG_GameSingleton::GetSingleton()
 	return nullptr;
 }
 
+UFXManager* URPG_GameSingleton::GetFXManager()
+{
+	if(!FXManager)
+	{
+		FXManager = NewObject<UFXManager>(this, UFXManager::StaticClass());
+		return FXManager;
+	}
+
+	return FXManager;
+}
+
 TMap<FGameplayAttribute, UCurveFloat*>* URPG_GameSingleton::GetAttributeLevelUpMap()
 {
 	return &AttributeLevelUpMap;

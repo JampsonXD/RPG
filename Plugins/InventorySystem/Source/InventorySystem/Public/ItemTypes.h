@@ -13,6 +13,22 @@ class UItem;
  * 
  */
 
+/* Additional information an item data contains that can modify state and is set in C++.
+ * This is useful for things such as reserve ammo found in a weapon or the durability
+ * of a weapon. Empty by default but should be sub-classed and passed down for
+ * different items based on the needs.
+ */
+
+USTRUCT()
+struct FInventoryItemData
+{
+	GENERATED_BODY()
+
+	FInventoryItemData() {}
+	virtual ~FInventoryItemData() {}
+	virtual bool IsValid() { return false; }
+};
+
 USTRUCT(BlueprintType)
 struct FEquippedSlot
 {
@@ -80,13 +96,15 @@ struct FInventorySlot
 		Item = nullptr;
 		StackCount = -1;
 		Id = FGuid();
+		ItemData = nullptr;
 	}
 
-	FInventorySlot(UItem* InItem, int InStackCount = 1)
+	FInventorySlot(UItem* InItem, int InStackCount = 1, FInventoryItemData* InItemData = nullptr)
 	{
 		Item = InItem;
 		StackCount = InStackCount;
 		Id = FGuid();
+		ItemData = InItemData;
 	}
 
 	FORCEINLINE bool operator ==(const FInventorySlot& OtherSlot) const { return this->Id == OtherSlot.Id; }
@@ -98,6 +116,8 @@ struct FInventorySlot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int StackCount;
 
+	FInventoryItemData* ItemData;
+
 	bool IsValid() const { return Item && StackCount > 0 && Id.IsValid();  }
 	// Checks if we have a valid Item class and stacks, but does not check for our Id
 	bool IsValidNonGenerated() const { return Item && StackCount > 0; }
@@ -105,6 +125,7 @@ struct FInventorySlot
 	int GetOpenStackCount() const { return GetMaxStackCount() - StackCount;  }
 	bool IsFilledSlot() const { return StackCount >= GetMaxStackCount();  }
 	void GenerateGuidId() { Id = FGuid::NewGuid(); }
+	void InvalidateGuidId() { Id.Invalidate(); }
 	FGuid GetGuid() const { return Id; }
 
 	private:

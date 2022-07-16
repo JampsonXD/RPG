@@ -306,7 +306,7 @@ bool UInventorySystemComponent::GetFirstAvailableEquipmentSlot(FGameplayTag Type
 		return false;
 	}
 
-	for(TPair<FEquippedSlot, FInventorySlot> Slot : EquipmentMap)
+	for(TPair<FEquippedSlot, FInventorySlot>& Slot : EquipmentMap)
 	{
 		FEquippedSlot& Key = Slot.Key;
 		if(Type.MatchesTag(Key.SlotType) && !Slot.Value.IsValid())

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FXTypes.h"
 #include "GAS/GAS_Types.h"
 #include "RPGBFL_MainFunctions.generated.h"
 
@@ -34,4 +35,15 @@ class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 	 */
 	UFUNCTION(BlueprintCallable, Category = "RPGBFL Main Functions")
 	static bool GetFirstActorOfClassOrFirstActor(TArray<AActor*> ActorArray, TSubclassOf<AActor> ActorFilter, AActor*& FoundActor);
+
+	UFUNCTION(BlueprintCallable, Category = "RPG Effects")
+	static FActiveEffectPackHandle PlayEffectPackAtLocation(FEffectPack EffectPack, AActor* SourceActor,
+	AActor* TargetActor = nullptr, EEffectActivationType ActivationType = EEffectActivationType::Instant, FTransform Transform = FTransform());
+
+	UFUNCTION(BlueprintCallable, Category = "RPG Effects")
+	static FActiveEffectPackHandle PlayEffectPackAttached(FEffectPack EffectPack, AActor* SourceActor, AActor* TargetActor = nullptr,
+		EEffectActivationType ActivationType = EEffectActivationType::Instant, USceneComponent* AttachComponent = nullptr);
+
+	UFUNCTION(BlueprintCallable, Category = "RPG Effects")
+	static void StopActiveEffectPackWithHandle(UPARAM(ref) FActiveEffectPackHandle& Handle);
 };
