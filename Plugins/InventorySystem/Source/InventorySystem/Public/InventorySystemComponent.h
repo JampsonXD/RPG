@@ -92,6 +92,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component")
 	bool GetItemById(const FGuid Guid, FInventorySlot& OutItem);
 
+	/* Returns true or false based on if this inventory has an instance of this item */
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component")
+	bool HasItem(const UItem* Item);
+
 	FInventorySlot* Internal_GetItemById(const FGuid Guid);
 
 private:

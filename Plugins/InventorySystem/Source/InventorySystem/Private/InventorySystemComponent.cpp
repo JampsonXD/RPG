@@ -196,6 +196,18 @@ bool UInventorySystemComponent::GetItemById(const FGuid Guid, FInventorySlot& Ou
 	return false;
 }
 
+bool UInventorySystemComponent::HasItem(const UItem* Item)
+{
+	/* Return false if we pass in no item */
+	if (!Item) return false;
+
+	/* Check if any of our inventory slots contains a reference to the data asset */
+	return InventoryItems.ContainsByPredicate([Item](const FInventorySlot& Slot)
+		{
+			return Slot.Item == Item;
+		});
+}
+
 FInventorySlot* UInventorySystemComponent::Internal_GetItemById(const FGuid Guid)
 {
 	for (FInventorySlot& InventorySlot : InventoryItems)
