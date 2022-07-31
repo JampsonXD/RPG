@@ -298,7 +298,7 @@ FInventorySlot* UInventorySystemComponent::GetItemAtEquipmentSlot(const FEquippe
 
 bool UInventorySystemComponent::IsItemEquipped(const FInventorySlot& InventorySlot, FEquippedSlot& EquippedSlot)
 {
-	for(TPair<FEquippedSlot, FInventorySlot> Pair : EquipmentMap)
+	for(TPair<FEquippedSlot, FInventorySlot>& Pair : EquipmentMap)
 	{
 		if(Pair.Value == InventorySlot)
 		{

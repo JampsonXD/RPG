@@ -34,4 +34,10 @@ public:
 
 	/* Whether the item should be consumed on use */
 	virtual bool ConsumeOnUse() const = 0;
+
+	/* Item to call when the item is used */
+	//virtual void Use(AActor* OwningActor) const = 0;
+
+	/* Function to call when the item is equipped */
+	//virtual void OnEquipped(AActor* OwningActor) const = 0;
 };
