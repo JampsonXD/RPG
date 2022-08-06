@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FXTypes.h"
+#include "GameplayTag/RPG_TagLibrary.h"
 #include "GAS/GAS_Types.h"
 #include "RPGBFL_MainFunctions.generated.h"
 
@@ -46,4 +47,40 @@ class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, Category = "RPG Effects")
 	static void StopActiveEffectPackWithHandle(UPARAM(ref) FActiveEffectPackHandle& Handle);
+
+	UFUNCTION(BlueprintCallable, Category = "RPG GAS")
+	static void AddLooseGameplayTagsToActor(AActor* TargetActor, const FGameplayTagContainer Tags);
+
+	UFUNCTION(BlueprintCallable, Category = "RPG GAS")
+	static void RemoveLooseGameplayTagsToActor(AActor* TargetActor, const FGameplayTagContainer Tags);
+
+	UFUNCTION(BlueprintPure, Category = "RPG Gameplay Tags")
+	static FGameplayTag GetAimingTag()
+	{
+		return FRPG_TagLibrary::Get().AimingTag();
+	}
+
+	UFUNCTION(BlueprintPure, Category = "RPG Gameplay Tags")
+		static FGameplayTag GetCrouchingTag()
+	{
+		return FRPG_TagLibrary::Get().CrouchingTag();
+	}
+
+	UFUNCTION(BlueprintPure, Category = "RPG Gameplay Tags")
+		static FGameplayTag GetRunningTag()
+	{
+		return FRPG_TagLibrary::Get().RunningTag();
+	}
+
+	UFUNCTION(BlueprintPure, Category = "RPG Gameplay Tags")
+		static FGameplayTag GetWeaponLoweredTag()
+	{
+		return FRPG_TagLibrary::Get().WeaponLoweredTag();
+	}
+
+	UFUNCTION(BlueprintPure, Category = "RPG Gameplay Tags")
+		static FGameplayTag GetJumpingTag()
+	{
+		return FRPG_TagLibrary::Get().JumpingTag();
+	}
 };

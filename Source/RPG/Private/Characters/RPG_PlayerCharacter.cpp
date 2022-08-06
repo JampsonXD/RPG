@@ -16,18 +16,32 @@ ARPG_PlayerCharacter::ARPG_PlayerCharacter(const FObjectInitializer& ObjectIniti
 	// set our turn rates for input
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
-	
-	// Create a camera boom (pulls in towards the player if there is a collision)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 
-	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+					/* First Person */
+	/****************************************************/
+	/****************************************************/
 
+	GetMesh()->SetupAttachment(RootComponent);
+	GetMesh()->SetRelativeLocation(FVector(0, 0, -90.f));
+	GetMesh()->SetRelativeRotation(FRotator(0, 0, -90.f));
+
+	FirstPersonCameraParent = CreateDefaultSubobject<USceneComponent>(TEXT("Camera Parent Scene Component"));
+	FirstPersonCameraParent->SetupAttachment(GetMesh(), TEXT("SOCKET_Camera"));
+
+	FirstPersonSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("First Person Springarm"));
+	FirstPersonSpringArm->SetupAttachment(FirstPersonCameraParent);
+	FirstPersonSpringArm->SetRelativeLocation(FVector::ZeroVector);
+
+	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("First Person Camera"));
+	FirstPersonCamera->SetupAttachment(FirstPersonSpringArm);
+	FirstPersonCamera->FieldOfView = 97.f;
+	FirstPersonCamera->SetAutoActivate(true);
+
+
+
+				/* Interaction System Component */
+	/****************************************************/
+	/****************************************************/
 	InteractionSystemComponent = CreateDefaultSubobject<UInteractionSystemComponent>(TEXT("Interaction System Component"));
 }
 
@@ -121,40 +135,38 @@ void ARPG_PlayerCharacter::OnPlayerMovementInput(const FInputActionValue& Action
 	}
 }
 
-void ARPG_PlayerCharacter::TurnAtRate(float Rate)
+void ARPG_PlayerCharacter::OnPlayerCameraInput(const FInputActionValue& ActionValue)
 {
-	// calculate delta for this frame from the rate information
-	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
-}
+	const FVector MovementVector = ActionValue.Get<FVector>();
+	const float X = MovementVector.X;
+	const float Y = MovementVector.Y;
 
-void ARPG_PlayerCharacter::LookUpAtRate(float Rate)
-{
-	// calculate delta for this frame from the rate information
-	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+	if(X != 0)
+	{
+		AddControllerYawInput(X * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+	}
+
+	if(Y != 0)
+	{
+		AddControllerPitchInput(Y * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+	}
 }
 
 void ARPG_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	
-	// Set up gameplay key bindings
+	// Set up game play key bindings
 	check(PlayerInputComponent);
 
 	if(UEnhancedInputComponent* PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		PlayerEnhancedInputComponent->BindAction(MovementInputAction, ETriggerEvent::Triggered, this, &ARPG_PlayerCharacter::OnPlayerMovementInput);
+		PlayerEnhancedInputComponent->BindAction(CameraInputAction, ETriggerEvent::Triggered, this, &ARPG_PlayerCharacter::OnPlayerCameraInput);
 	}
 	
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("TurnRate", this, &ARPG_PlayerCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("LookUpRate", this, &ARPG_PlayerCharacter::LookUpAtRate);
 
 	// Bind our Ability System Component Input
 	BindASCInput();

@@ -3,6 +3,8 @@
 
 #include "RPGBFL_MainFunctions.h"
 
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
 #include "RPG_GameSingleton.h"
 
 int URPGBFL_MainFunctions::AppendUnique(const TArray<UProperty*>& TargetArray, UPARAM(ref)TArray<UProperty*>& OutArray)
@@ -59,4 +61,24 @@ FActiveEffectPackHandle URPGBFL_MainFunctions::PlayEffectPackAttached(FEffectPac
 void URPGBFL_MainFunctions::StopActiveEffectPackWithHandle(FActiveEffectPackHandle& Handle)
 {
 	URPG_GameSingleton::GetSingleton()->GetFXManager()->StopActivePack(Handle);
+}
+
+void URPGBFL_MainFunctions::AddLooseGameplayTagsToActor(AActor* TargetActor, const FGameplayTagContainer Tags)
+{
+	const IAbilitySystemInterface* Interface = Cast<IAbilitySystemInterface>(TargetActor);
+
+	if(UAbilitySystemComponent* ASC = Interface ? Interface->GetAbilitySystemComponent() : nullptr)
+	{
+		ASC->AddLooseGameplayTags(Tags);
+	}
+}
+
+void URPGBFL_MainFunctions::RemoveLooseGameplayTagsToActor(AActor* TargetActor, const FGameplayTagContainer Tags)
+{
+	const IAbilitySystemInterface* Interface = Cast<IAbilitySystemInterface>(TargetActor);
+
+	if (UAbilitySystemComponent* ASC = Interface ? Interface->GetAbilitySystemComponent() : nullptr)
+	{
+		ASC->RemoveLooseGameplayTags(Tags);
+	}
 }

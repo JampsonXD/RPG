@@ -5,42 +5,25 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "RPG_Types.h"
+#include "Characters/RPGCharacterInterface.h"
+#include "DataAssets/RPG_CharacterDataAsset.h"
 #include "GameFramework/Character.h"
 #include "GAS/AbilitySet.h"
 #include "Items/ArmorItem.h"
 #include "RPG_Character.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FArmorChanged, FArmorEquipData, ArmorEquipData);
-
 UCLASS(config=Game)
-class ARPG_Character : public ACharacter, public IAbilitySystemInterface
+class ARPG_Character : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface, public IRPGCharacterInterface
 {
 	GENERATED_BODY()
 
 protected:
-
-	UPROPERTY(EditDefaultsOnly, Category = "Armor")
-	USkeletalMeshComponent* ChestArmorMeshComponent;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Armor")
-	USkeletalMeshComponent* GauntletMeshComponent;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Armor")
-	USkeletalMeshComponent* HelmetMeshComponent;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Armor")
-	USkeletalMeshComponent* LegMeshComponent;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Armor")
-	TMap<EArmorEquipSlot, UArmorItem*> ArmorMap;
 	
 	virtual void PossessedBy(AController* NewController) override;
 
+	/* Primary Asset Id used to load data related to our character */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Data")
 	FPrimaryAssetId CharacterDataAssetID;
-
-	UPROPERTY(BlueprintAssignable)
-	FArmorChanged ArmorChanged;
 	
 	// Weak Object Reference to our ASC
 	TWeakObjectPtr<class URPG_AbilitySystemComponent> AbilitySystemComponent;
@@ -55,9 +38,6 @@ protected:
 	// Handle for our default ability set
 	UPROPERTY()
 	FAbilitySetActiveHandle DefaultAbilitySetHandle;
-
-	UFUNCTION()
-	USkeletalMeshComponent* GetMeshComponentFromArmorSlotType(EArmorEquipSlot EquipSlot) const;
 	
 	UFUNCTION()
 	virtual void InitAttributeSets(class ARPG_PlayerState* PS);
@@ -66,6 +46,24 @@ protected:
 
 	virtual void OnCharacterDataLoaded(FPrimaryAssetId LoadedId);
 
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+
+	virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
+
+	virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+
+	virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+
+	bool IsAiming_Implementation() const override;
+
+	bool IsRunning_Implementation() const override;
+
+	bool IsCrouching_Implementation() const override;
+
+	bool IsWeaponLowered_Implementation() const override;
+
+	bool IsJumping_Implementation() const override;
+
 public:
 	ARPG_Character(const FObjectInitializer& ObjectInitializer);
 
@@ -73,14 +71,5 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure , Category = "Attributes | Character Level")
 	float GetCharacterLevel();
-
-	UFUNCTION(BlueprintPure, Category = "Item | Armor")
-	bool IsEquipped(UItem* Item) const;
-	
-	UFUNCTION(BlueprintCallable, Category = "Item | Armor")
-	bool TryEquipArmor(UArmorItem* Armor);
-
-	UFUNCTION()
-	void UnequipArmor(UArmorItem* ArmorItem);
 };
 

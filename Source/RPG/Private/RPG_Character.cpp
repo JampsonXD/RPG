@@ -8,6 +8,7 @@
 #include "DataAssets/RPG_CharacterDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameplayTag/RPG_TagLibrary.h"
 #include "GAS/RPG_AbilitySystemComponent.h"
 #include "GAS/RPG_GameplayAbility.h"
 #include "RPG/RPG.h"
@@ -18,28 +19,6 @@
 
 ARPG_Character::ARPG_Character(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	ChestArmorMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(FName("ChestArmor"));
-	ChestArmorMeshComponent->SetupAttachment(GetMesh());
-	ChestArmorMeshComponent->SetMasterPoseComponent(GetMesh(), true);
-
-	GauntletMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(FName("GauntletArmor"));
-	GauntletMeshComponent->SetupAttachment(GetMesh());
-	GauntletMeshComponent->SetMasterPoseComponent(GetMesh(), true);
-
-	HelmetMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(FName("HelmetArmor"));
-	HelmetMeshComponent->SetupAttachment(GetMesh());
-	HelmetMeshComponent->SetMasterPoseComponent(GetMesh(), true);
-
-	LegMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(FName("LegArmor"));
-	LegMeshComponent->SetupAttachment(GetMesh());
-	LegMeshComponent->SetMasterPoseComponent(GetMesh(), true);
-
-	// Add our armor map slots, these should have null values as we shouldn't have any armor equipped
-	ArmorMap.Add(EArmorEquipSlot::Helmet, nullptr);
-	ArmorMap.Add(EArmorEquipSlot::Chest, nullptr);
-	ArmorMap.Add(EArmorEquipSlot::Gauntlets, nullptr);
-	ArmorMap.Add(EArmorEquipSlot::Legs, nullptr);
-	
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -70,73 +49,6 @@ float ARPG_Character::GetCharacterLevel()
 	return 1.f;
 }
 
-bool ARPG_Character::IsEquipped(UItem* Item) const
-{
-	if(!Item)
-	{
-		return false;
-	}
-	
-	// Loop through our armor and check if we have the item equipped
-	for(const TPair<EArmorEquipSlot, UArmorItem*> Pair : ArmorMap)
-	{
-		if(Pair.Value == Item)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool ARPG_Character::TryEquipArmor(UArmorItem* Armor)
-{
-	if(!Armor)
-	{
-		return false;
-	}
-
-	if(UArmorItem** PreviousArmor = ArmorMap.Find(Armor->GetEquipSlot()))
-	{
-		// If our previous armor is the same as our new armor, stop the process here
-		if(*PreviousArmor == Armor)
-		{
-			return false;
-		}
-		UnequipArmor(*PreviousArmor);
-	}
-	
-	USkeletalMeshComponent* MeshComponent = GetMeshComponentFromArmorSlotType(Armor->GetEquipSlot());
-
-	if(!MeshComponent)
-	{
-		return false;
-	}
-	
-	MeshComponent->SetSkeletalMesh(Armor->GetArmorMesh());
-	Armor->AddAbilitySet(GetAbilitySystemComponent());
-	ArmorMap.Add(Armor->GetEquipSlot(), Armor);
-	return true;
-}
-
-void ARPG_Character::UnequipArmor(UArmorItem* ArmorItem)
-{
-	if(!ArmorItem)
-	{
-		return;
-	}
-
-	// Remove our granted ability set and set the armor map back to null
-	ArmorItem->RemoveAbilitySet();
-	ArmorMap.Add(ArmorItem->GetEquipSlot(), nullptr);
-
-	// Try getting our mesh component for our armor and remove the mesh
-	if(USkeletalMeshComponent* MeshComponent = GetMeshComponentFromArmorSlotType(ArmorItem->GetEquipSlot()))
-	{
-		MeshComponent->SetSkeletalMesh(nullptr);
-	}
-}
-
 void ARPG_Character::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -154,33 +66,14 @@ void ARPG_Character::PossessedBy(AController* NewController)
 		InitAttributeSets(PS);
 
 		// Activate our default Ability Set if its not currently active
-		if(!DefaultAbilitySetHandle.IsActive())
+		if(!DefaultAbilitySetHandle.IsActive() && DefaultAbilitySet)
 		{
 			DefaultAbilitySetHandle = AbilitySystemComponent->AddAbilitySet(DefaultAbilitySet, this);
 		}
 	}
 }
 
-USkeletalMeshComponent* ARPG_Character::GetMeshComponentFromArmorSlotType(EArmorEquipSlot EquipSlot) const
-{
-	switch (EquipSlot)
-	{
-		case EArmorEquipSlot::Chest :
-			return ChestArmorMeshComponent;
 
-		case EArmorEquipSlot::Gauntlets :
-			return GauntletMeshComponent;
-
-		case EArmorEquipSlot::Helmet :
-			return HelmetMeshComponent;
-
-		case EArmorEquipSlot::Legs :
-			return LegMeshComponent;
-
-		default:
-			return nullptr;
-	}
-}
 
 void ARPG_Character::InitAttributeSets(class ARPG_PlayerState* PS)
 {
@@ -207,4 +100,67 @@ void ARPG_Character::OnCharacterDataLoaded(FPrimaryAssetId LoadedId)
 		GetMesh()->SetSkeletalMesh(CharacterData->CharacterMesh);
 		GetMesh()->SetAnimInstanceClass(CharacterData->AnimClass);
 	}
+}
+
+void ARPG_Character::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+{
+	if(AbilitySystemComponent.IsValid())
+	{
+		AbilitySystemComponent.Get()->GetOwnedGameplayTags(TagContainer);
+	}
+}
+
+bool ARPG_Character::HasMatchingGameplayTag(FGameplayTag TagToCheck) const
+{
+	if (AbilitySystemComponent.IsValid())
+	{
+		return AbilitySystemComponent.Get()->HasMatchingGameplayTag(TagToCheck);
+	}
+
+	return false;
+}
+
+bool ARPG_Character::HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	if (AbilitySystemComponent.IsValid())
+	{
+		return AbilitySystemComponent.Get()->HasAllMatchingGameplayTags(TagContainer);
+	}
+
+	return false;
+}
+
+bool ARPG_Character::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	if (AbilitySystemComponent.IsValid())
+	{
+		return AbilitySystemComponent.Get()->HasAnyMatchingGameplayTags(TagContainer);
+	}
+
+	return false;
+}
+
+bool ARPG_Character::IsAiming_Implementation() const
+{
+	return HasMatchingGameplayTag(FRPG_TagLibrary::Get().AimingTag());
+}
+
+bool ARPG_Character::IsRunning_Implementation() const
+{
+	return HasMatchingGameplayTag(FRPG_TagLibrary::Get().RunningTag());
+}
+
+bool ARPG_Character::IsCrouching_Implementation() const
+{
+	return HasMatchingGameplayTag(FRPG_TagLibrary::Get().CrouchingTag());
+}
+
+bool ARPG_Character::IsWeaponLowered_Implementation() const
+{
+	return HasMatchingGameplayTag(FRPG_TagLibrary::Get().WeaponLoweredTag());
+}
+
+bool ARPG_Character::IsJumping_Implementation() const
+{
+	return HasMatchingGameplayTag(FRPG_TagLibrary::Get().JumpingTag());
 }

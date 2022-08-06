@@ -19,13 +19,17 @@ class RPG_API ARPG_PlayerCharacter : public ARPG_Character, public IInteractionS
 {
 	GENERATED_BODY()
 
-	/** Camera boom positioning the camera behind the character */
+	/** First Person Spring Arm */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
+	class USpringArmComponent* FirstPersonSpringArm;
 
-	/** Follow camera */
+	/** Scene Component that our first person camera is attached to */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FollowCamera;
+	USceneComponent* FirstPersonCameraParent;
+
+	/** First Person Camera */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* FirstPersonCamera;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	class UInteractionSystemComponent* InteractionSystemComponent;
@@ -53,9 +57,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input Actions")
 	UInputAction* MovementInputAction;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input Actions")
+	UInputAction* CameraInputAction;
+
 	virtual void PawnClientRestart() override;
 	
 	void OnPlayerMovementInput(const FInputActionValue& ActionValue);
+
+	void OnPlayerCameraInput(const FInputActionValue& ActionValue);
 	
 	virtual FInteractionTracePoints GetTracePoints() const override;
 
@@ -65,29 +74,22 @@ protected:
 
 	UFUNCTION()
 	void BindASCInput();
-
-	/** 
-	* Called via input to turn at a given rate. 
-	* @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	*/
-	void TurnAtRate(float Rate);
-
-	/**
-	* Called via input to turn look up/down at a given rate. 
-	* @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	*/
-	void LookUpAtRate(float Rate);
 	
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
 
 public:
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns FollowCamera subobject **/
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+
+
 	/** Returns our Interaction System Component **/
 	virtual UInteractionSystemComponent* GetInteractionSystemComponent() const override;
+	/** Returns the First Person Spring Arm **/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "First Person")
+	FORCEINLINE class USpringArmComponent* GetFirstPersonSpringArm() const { return FirstPersonSpringArm; }
+	/** Returns the First Person Camera **/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "First Person")
+	FORCEINLINE class UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }
 	
 };
