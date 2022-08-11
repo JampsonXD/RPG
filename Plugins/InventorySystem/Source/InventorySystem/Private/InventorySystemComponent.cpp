@@ -13,126 +13,115 @@ AActor* UInventorySystemComponent::GetAvatarActor() const
 	return AvatarActor;
 }
 
-bool UInventorySystemComponent::AddInventoryItem(UItem* Item, int StackCount)
+bool UInventorySystemComponent::AddItem(UItem* Item, int StackCount, bool bAutoEquip)
 {
 	if(!Item || StackCount <= 0)
 	{
 		return false;
 	}
 
-	bool bAddedItems = false;
+	FInventorySlotData OldSlot;
+	GetInventorySlotForItem(Item, OldSlot);
 
-	// Check if we have any open slots from current items to add our stacks to
-	TArray<FInventorySlot*> OpenSlots;
-	if(Item->IsStackable() && GetOpenInventorySlotsFromItem(Item, OpenSlots))
+	FInventorySlotData NewSlot = OldSlot;
+	NewSlot.UpdateSlotData(FInventorySlotData(StackCount), Item->GetMaxStackCount());
+
+	/* If our data changed after trying to update */
+	if(NewSlot != OldSlot)
 	{
-		bAddedItems = true;
-		for(FInventorySlot*& InventorySlot : OpenSlots)
+		InventoryMap.Add(Item, NewSlot);
+
+		/* If we have a delegate listening for this items stack count to change, broadcast to it the old and new stack values */
+		if(ItemStackCountChangedMap.Find(Item))
 		{
-			const int StacksToAdd = FMath::Min(InventorySlot->GetOpenStackCount(), StackCount);
-			InventorySlot->StackCount += StacksToAdd;
-			OnItemChanged.Broadcast(*InventorySlot, EInventorySlotChangeType::StackChange);
-			StackCount -= StacksToAdd;
-
-			if(StackCount <= 0)
-			{
-				return bAddedItems;
-			}
+			ItemStackCountChangedMap.FindChecked(Item).Broadcast(OldSlot.StackCount, NewSlot.StackCount);
 		}
-	}
 
-	// Don't try to add items if our inventory is already full
-	if (IsInventoryFull())
-	{
-		return bAddedItems;
-	}
-
-	// We are going to create atleast one instance of an inventory slot so we can change to true
-	bAddedItems = true;
-
-	while (StackCount > 0 && !IsInventoryFull())
-	{
-		const int Stacks = FMath::Min(Item->GetMaxStackCount(), StackCount);
-		FInventorySlot NewSlot = FInventorySlot(Item, Stacks);
-		AddInventoryItemSlot(NewSlot);
-		StackCount -= Stacks;
-	}
-
-
-	return bAddedItems;
-}
-
-bool UInventorySystemComponent::AddInventoryItemSlotFromSlotData(FInventorySlot& InventorySlot)
-{
-	// Don't try to add items if our inventory is already full
-	if (IsInventoryFull())
-	{
-		return false;
-	}
-
-
-	AddInventoryItemSlot(InventorySlot);
-	return true;
-}
-
-void UInventorySystemComponent::AddInventoryItemSlot(FInventorySlot& InventorySlot)
-{
-	InventorySlot.GenerateGuidId();
-	InventoryItems.Add(InventorySlot);
-	OnItemChanged.Broadcast(InventorySlot, EInventorySlotChangeType::Added);
-}
-
-void UInventorySystemComponent::RemoveInventoryItemSlot(FInventorySlot& InventorySlot)
-{
-	/* Remove the item from our equipped slot before removing the item from our inventory */
-	FEquippedSlot EquippedSlot;
-	if(IsItemEquipped(InventorySlot, EquippedSlot))
-	{
-		RemoveItemFromEquipmentSlot(EquippedSlot);
-	}
-
-	OnItemChanged.Broadcast(InventorySlot, EInventorySlotChangeType::Removed);
-	InventoryItems.RemoveSingle(InventorySlot);
-}
-
-bool UInventorySystemComponent::RemoveItemStacks(FInventorySlot* InventorySlot, int StacksToRemove)
-{
-	if(!InventorySlot || !InventorySlot->IsValid())
-	{
-		return false;
-	}
-
-	InventorySlot->StackCount -= StacksToRemove;
-	if (InventorySlot->StackCount <= 0)
-	{
-		RemoveInventoryItemSlot(*InventorySlot);
+		OnItemChanged.Broadcast(Item, OldSlot.StackCount == 0 ? EInventorySlotChangeType::Added : EInventorySlotChangeType::StackChange);
 		return true;
-	}
-
-	OnItemChanged.Broadcast(*InventorySlot, EInventorySlotChangeType::StackChange);
-	return true;
-}
-
-bool UInventorySystemComponent::TryRemoveItem(const FGuid FGuid, int32 StacksToRemove)
-{
-	if(FInventorySlot* Slot = Internal_GetItemById(FGuid))
-	{
-		return RemoveItemStacks(Slot, StacksToRemove);
 	}
 
 	return false;
 }
 
-void UInventorySystemComponent::InitInventorySystemComponent()
+bool UInventorySystemComponent::RemoveItem(UItem* Item, int StackCount)
 {
-	/* If our inventory is not unlimited or 0, reserve space based on our max inventory size */
-	if(InventoryLimit > 0)
+	if(!Item)
 	{
-		InventoryItems.Reserve(InventoryLimit);
+		return false;
 	}
 
+	FInventorySlotData OldSlot;
+	GetInventorySlotForItem(Item, OldSlot);
+
+	if(!OldSlot.IsValid())
+	{
+		return false;
+	}
+
+	FInventorySlotData NewSlot = OldSlot;
+
+	NewSlot.StackCount = StackCount <= 0 ? 0 : NewSlot.StackCount - StackCount;
+
+	if(NewSlot.StackCount > 0)
+	{
+		InventoryMap.Add(Item, NewSlot);
+		OnItemChanged.Broadcast(Item, EInventorySlotChangeType::StackChange);
+
+		if(ItemStackCountChangedMap.Find(Item))
+		{
+			ItemStackCountChangedMap[Item].Broadcast(OldSlot.StackCount, NewSlot.StackCount);
+		}
+	}
+	else
+	{
+		InventoryMap.Remove(Item);
+		OnItemChanged.Broadcast(Item, EInventorySlotChangeType::Removed);
+	}
+
+	return true;
+}
+
+bool UInventorySystemComponent::GetInventoryItems(FGameplayTag ItemType, TArray<UItem*>& OutItems)
+{
+	if(ItemType == FGameplayTag::EmptyTag)
+	{
+		InventoryMap.GetKeys(OutItems);
+		return !OutItems.IsEmpty();
+	}
+
+	for(TPair<UItem*, FInventorySlotData>& Pair : InventoryMap)
+	{
+		if(Pair.Key && Pair.Key->GetItemType().MatchesTag(ItemType))
+		{
+			OutItems.Add(Pair.Key);
+		}
+	}
+
+	return !OutItems.IsEmpty();
+}
+
+int UInventorySystemComponent::GetItemStackCount(const UItem* Item)
+{
+	if(!Item)
+	{
+		return 0;
+	}
+
+	if(const FInventorySlotData* SlotData = InventoryMap.Find(Item))
+	{
+		return SlotData->StackCount;
+	}
+
+	return 0;
+}
+
+void UInventorySystemComponent::InitInventorySystemComponent()
+{
 	if(!DefaultEquipmentSlots.IsEmpty())
 	{
+		EquipmentMap.Reserve(DefaultEquipmentSlots.Num());
+
 		/* Loop through our map of slot types to slot amounts
 		 * Add a new equipment slot for each slot up the total amount
 		 */
@@ -148,52 +137,8 @@ void UInventorySystemComponent::InitInventorySystemComponent()
 	// Add Default Inventory Items to our Inventory
 	for(const FDefaultInventoryData& InventorySlot : DefaultInventoryItemData)
 	{
-		FInventorySlot Slot = FInventorySlot(InventorySlot.Item, InventorySlot.StackCount);
-		Slot.StackCount = FMath::Min(InventorySlot.Item->GetMaxStackCount(), InventorySlot.StackCount);
-		AddInventoryItemSlot(Slot);
-
-		/* Try equipping our item in the first open slot */
-		if(InventorySlot.bEquipOnAdded)
-		{
-			FEquippedSlot EquippedSlot;
-			AddInventoryItemToFirstOpenEquipmentSlot(Slot, EquippedSlot);
-		}
+		AddItem(InventorySlot.Item, InventorySlot.StackCount, InventorySlot.bEquipOnAdded);
 	}
-
-	// Set our Inventory Size Limit after, letting us drop items if we are above the max
-	SetInventoryLimit(InventoryLimit, true);
-}
-
-bool UInventorySystemComponent::GetInventoryItems(FGameplayTag Type, TArray<FInventorySlot>& OutInventorySlots) const
-{
-	// Return our whole Inventory Items Array if we aren't filtering
-	if(Type == FGameplayTag::EmptyTag)
-	{
-		OutInventorySlots.Append(InventoryItems);
-		return true;
-	}
-	
-	for(const FInventorySlot& InventorySlot : InventoryItems)
-	{
-		if(InventorySlot.Item->GetItemType().MatchesTag(Type))
-		{
-			OutInventorySlots.Add(InventorySlot);
-		}
-	}
-
-	return OutInventorySlots.Num() > 0 ? true : false;
-}
-
-bool UInventorySystemComponent::GetItemById(const FGuid Guid, FInventorySlot& OutItem)
-{
-	if(const FInventorySlot* Slot = Internal_GetItemById(Guid))
-	{
-		OutItem = *Slot;
-		return true;
-	}
-
-	OutItem = FInventorySlot();
-	return false;
 }
 
 bool UInventorySystemComponent::HasItem(const UItem* Item)
@@ -202,41 +147,18 @@ bool UInventorySystemComponent::HasItem(const UItem* Item)
 	if (!Item) return false;
 
 	/* Check if any of our inventory slots contains a reference to the data asset */
-	return InventoryItems.ContainsByPredicate([Item](const FInventorySlot& Slot)
-		{
-			return Slot.Item == Item;
-		});
-}
-
-FInventorySlot* UInventorySystemComponent::Internal_GetItemById(const FGuid Guid)
-{
-	for (FInventorySlot& InventorySlot : InventoryItems)
-	{
-		if (Guid == InventorySlot.GetGuid())
-		{
-			return &InventorySlot;
-		}
-	}
-
-	return nullptr;
-}
-
-bool UInventorySystemComponent::GetOpenInventorySlotsFromItem(const UItem* Item, TArray<FInventorySlot*>& InventorySlots)
-{
-	for(FInventorySlot& InventorySlot : InventoryItems)
-	{
-		if(Item == InventorySlot.Item && !InventorySlot.IsFilledSlot())
-		{
-			InventorySlots.Add(&InventorySlot);
-		}
-	}
-
-	return InventorySlots.Num() > 0;
+	const FInventorySlotData* Data = InventoryMap.Find(Item);
+	return Data ? true : false;
 }
 
 FOnItemChanged& UInventorySystemComponent::GetOnItemChangedDelegate()
 {
 	return OnItemChanged;
+}
+
+FOnItemStackCountChanged& UInventorySystemComponent::RegisterItemStackCountChangedEvent(const UItem* Item)
+{
+	return ItemStackCountChangedMap.FindOrAdd(Item);
 }
 
 void UInventorySystemComponent::InitActorInfo(AActor* InOwningActor, AActor* InAvatarActor)
@@ -245,62 +167,53 @@ void UInventorySystemComponent::InitActorInfo(AActor* InOwningActor, AActor* InA
 	AvatarActor = InAvatarActor;
 }
 
-void UInventorySystemComponent::SetInventoryLimit(int NewLimitSize, bool bDropItemsOverLimit)
+bool UInventorySystemComponent::GetInventorySlotForItem(UItem* Item, FInventorySlotData& InventorySlot)
 {
-	const int OldLimitSize = InventoryLimit;
-	InventoryLimit = NewLimitSize;
 
-	for(int i = InventoryItems.Num(); i > InventoryLimit; i--)
+	if(const FInventorySlotData* Slot = InventoryMap.Find(Item))
 	{
-		OnItemChanged.Broadcast(InventoryItems[i], EInventorySlotChangeType::Removed);
-		InventoryItems.RemoveAtSwap(i);
-	}
-}
-
-bool UInventorySystemComponent::IsInventoryFull() const
-{
-	return InventoryItems.Num() >= InventoryLimit;
-}
-
-bool UInventorySystemComponent::AddInventoryItemToFirstOpenEquipmentSlot(FInventorySlot& Slot, FEquippedSlot& OutEquipSlot)
-{
-	if(GetFirstAvailableEquipmentSlot(Slot.Item->GetItemType(), OutEquipSlot))
-	{
-		AddItemToEquipmentSlot(OutEquipSlot, Slot);
+		InventorySlot = *Slot;
 		return true;
 	}
 
+	InventorySlot = FInventorySlotData(0);
 	return false;
 }
 
 bool UInventorySystemComponent::UseItemAtEquipmentSlot(const FEquippedSlot EquippedSlot)
 {
-	FInventorySlot* InventorySlot = GetItemAtEquipmentSlot(EquippedSlot);
-	if(!InventorySlot)
+	UItem* Item = GetItemAtEquipmentSlot(EquippedSlot);
+	if(!Item)
 	{
 		return false;
 	}
 
-	OnEquipmentSlotUsed.Broadcast(*InventorySlot);
-	if(InventorySlot->Item->ConsumeOnUse())
+	OnEquipmentSlotUsed.Broadcast(EquippedSlot, Item);
+	if(Item->ConsumeOnUse())
 	{
-		RemoveItemStacks(InventorySlot);
+		RemoveItem(Item);
 	}
 
 	return true;
 }
 
-FInventorySlot* UInventorySystemComponent::GetItemAtEquipmentSlot(const FEquippedSlot& EquippedSlot)
+UItem* UInventorySystemComponent::GetItemAtEquipmentSlot(const FEquippedSlot& EquippedSlot)
 {
-	const FInventorySlot TempSlot = EquipmentMap.FindRef(EquippedSlot);
-	return Internal_GetItemById(TempSlot.GetGuid());
+	UItem** FoundItem = EquipmentMap.Find(EquippedSlot);
+	return FoundItem ? *FoundItem : nullptr;
 }
 
-bool UInventorySystemComponent::IsItemEquipped(const FInventorySlot& InventorySlot, FEquippedSlot& EquippedSlot)
+bool UInventorySystemComponent::IsItemEquipped(const UItem* Item, FEquippedSlot& EquippedSlot)
 {
-	for(TPair<FEquippedSlot, FInventorySlot>& Pair : EquipmentMap)
+	if(!Item)
 	{
-		if(Pair.Value == InventorySlot)
+		EquippedSlot = FEquippedSlot();
+		return false;
+	}
+
+	for(const TPair<FEquippedSlot, UItem*>& Pair : EquipmentMap)
+	{
+		if(Pair.Value == Item)
 		{
 			EquippedSlot = Pair.Key;
 			return true;
@@ -318,10 +231,10 @@ bool UInventorySystemComponent::GetFirstAvailableEquipmentSlot(FGameplayTag Type
 		return false;
 	}
 
-	for(TPair<FEquippedSlot, FInventorySlot>& Slot : EquipmentMap)
+	for(TPair<FEquippedSlot, UItem*>& Slot : EquipmentMap)
 	{
 		FEquippedSlot& Key = Slot.Key;
-		if(Type.MatchesTag(Key.SlotType) && !Slot.Value.IsValid())
+		if(Type.MatchesTag(Key.SlotType) && !Slot.Value)
 		{
 			OutOpenSlot = Slot.Key;
 			return true;
@@ -332,19 +245,15 @@ bool UInventorySystemComponent::GetFirstAvailableEquipmentSlot(FGameplayTag Type
 	return false;
 }
 
-void UInventorySystemComponent::AddItemToEquipmentSlot(const FEquippedSlot& EquippedSlot, const FInventorySlot& InventorySlot)
+void UInventorySystemComponent::AddItemToEquipmentSlot(const FEquippedSlot& EquippedSlot, UItem* Item)
 {
-	EquipmentMap.Add(EquippedSlot, InventorySlot);
-	OnEquipmentSlotChanged.Broadcast(EquippedSlot, InventorySlot, EEquipmentSlotChangeType::Added);
+	EquipmentMap.Add(EquippedSlot, Item);
+	OnEquipmentSlotChanged.Broadcast(EquippedSlot, Item, EEquipmentSlotChangeType::Added);
 }
 
 void UInventorySystemComponent::RemoveItemFromEquipmentSlot(const FEquippedSlot& EquippedSlot)
 {
-	EquipmentMap.Add(EquippedSlot, FInventorySlot());
-	OnEquipmentSlotChanged.Broadcast(EquippedSlot, FInventorySlot(), EEquipmentSlotChangeType::Removed);
-}
-
-int UInventorySystemComponent::GetOpenInventorySlotAmount() const
-{
-	return InventoryLimit - InventoryItems.Num();
+	UItem* Item = *(EquipmentMap.Find(EquippedSlot));
+	EquipmentMap.Add(EquippedSlot, nullptr);
+	OnEquipmentSlotChanged.Broadcast(EquippedSlot, Item, EEquipmentSlotChangeType::Removed);
 }

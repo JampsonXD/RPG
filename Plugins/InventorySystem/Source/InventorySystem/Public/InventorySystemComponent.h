@@ -9,10 +9,10 @@
 #include "InventorySystemComponent.generated.h"
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemChanged, FInventorySlot, ItemSlotInfo, EInventorySlotChangeType, ChangeType);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnEquipmentSlotChanged, FEquippedSlot, EquippedSlotData, FInventorySlot, InventorySlot, EEquipmentSlotChangeType, ChangeType);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquipmentSlotUsed, FInventorySlot, InventorySlot);
-DECLARE_DYNAMIC_DELEGATE_RetVal_OneParam(bool, FItemQuery, UItem*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemChanged, UItem*, Item, EInventorySlotChangeType, ChangeType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemStackCountChanged, int, OldStackCount, int, NewStackCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnEquipmentSlotChanged, FEquippedSlot, EquippedSlotData, UItem*, Item, EEquipmentSlotChangeType, ChangeType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEquipmentSlotUsed, FEquippedSlot, EquippedSlot, UItem*, Item);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class INVENTORYSYSTEM_API UInventorySystemComponent : public UActorComponent
@@ -30,13 +30,9 @@ class INVENTORYSYSTEM_API UInventorySystemComponent : public UActorComponent
 	
 protected:
 
-	// Our Array of Items the component currently has
+	// Map of Item Data to Inventory Data such as stack count
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory System Component | Items")
-	TArray<FInventorySlot> InventoryItems;
-
-	/** Maximum size of our components inventory **/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory System Component")
-	int32 InventoryLimit;
+	TMap<UItem*, FInventorySlotData> InventoryMap;
 	
 	/* Array of Item Classes to grant our Component when initialized
 	adding one or more of the same class will add a new item or update the existing
@@ -50,6 +46,11 @@ protected:
 
 public:
 
+	UPROPERTY()
+	TMap<const UItem*, FOnItemStackCountChanged> ItemStackCountChangedMap;
+
+public:
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component")
 	AActor* GetOwningActor() const;
 
@@ -57,67 +58,39 @@ public:
 	AActor* GetAvatarActor() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Items")
-	bool AddInventoryItem(UItem* Item, int StackCount = 1);
-
-
-private:
-
-	UFUNCTION()
-	bool AddInventoryItemSlotFromSlotData(FInventorySlot& InventorySlot);
-
-	UFUNCTION()
-	void AddInventoryItemSlot(FInventorySlot& InventorySlot);
-
-	UFUNCTION()
-	void RemoveInventoryItemSlot(FInventorySlot& InventorySlot);
-
-	bool RemoveItemStacks(FInventorySlot* InventorySlot, int StacksToRemove = 1);
-
-public:
+	bool AddItem(UItem* Item, int StackCount = 1, bool bAutoEquip = false);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Items")
-	bool TryRemoveItem(FGuid FGuid, int32 StacksToRemove = 1);
+	bool RemoveItem(UItem* Item, int StackCount = 1);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Items")
+	bool GetInventoryItems(FGameplayTag ItemType, TArray<UItem*>& OutItems);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Items")
+	int GetItemStackCount(const UItem* Item);
 
 	/** Initializes our Default Inventory Items
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Defaults")
 	void InitInventorySystemComponent();
 
-	/** Getter for our Inventory Items Array
-	 * @return TArray<UItem*> : Returns our Inventory Items
-	 */
-	UFUNCTION(BlueprintCallable)
-	bool GetInventoryItems(FGameplayTag Type, TArray<FInventorySlot>& OutInventorySlots) const;
-
-	UFUNCTION(BlueprintCallable, Category = "Inventory System Component")
-	bool GetItemById(const FGuid Guid, FInventorySlot& OutItem);
-
 	/* Returns true or false based on if this inventory has an instance of this item */
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component")
 	bool HasItem(const UItem* Item);
 
-	FInventorySlot* Internal_GetItemById(const FGuid Guid);
-
-private:
-
-	bool GetOpenInventorySlotsFromItem(const UItem* Item, TArray<FInventorySlot*>& InventorySlots);
-
-public:
-
 	UFUNCTION()
 	FOnItemChanged& GetOnItemChangedDelegate();
+
+	UFUNCTION()
+	FOnItemStackCountChanged& RegisterItemStackCountChangedEvent(const UItem* Item);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Initialize")
 	void InitActorInfo(AActor* InOwningActor, AActor* InAvatarActor);
 
-	UFUNCTION(BlueprintCallable, Category = "Inventory System Component")
-	void SetInventoryLimit(int NewLimitSize, bool bDropItemsOverLimit = false);
-
 protected:
 
-	int GetOpenInventorySlotAmount() const;
-	
-	bool IsInventoryFull() const;
+	UFUNCTION()
+	bool GetInventorySlotForItem(UItem* Item, FInventorySlotData& InventorySlot);
 
 
 	/**********************************************************
@@ -126,9 +99,9 @@ protected:
 
 protected:
 
-	// Maps equipped slot data to an inventory slot
+	// Maps equipped slot data to the item that is stored within
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory System Component | Equipment")
-	TMap<FEquippedSlot, FInventorySlot> EquipmentMap;
+	TMap<FEquippedSlot, UItem*> EquipmentMap;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnEquipmentSlotChanged OnEquipmentSlotChanged;
@@ -142,30 +115,22 @@ protected:
 
 public:
 
-	/**
-	 * Tries adding an Inventory Slot to the first available equipment slot
-	 * @param  Slot : The inventory slot we are trying to add
-	 * @param OutEquipSlot : The equipment slot we were added to, returns a default equipment slot structure if not available
-	 * @return bool : Whether we succeeded at adding the item to an equipment slot
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Equipment")
-	bool AddInventoryItemToFirstOpenEquipmentSlot(UPARAM(ref) FInventorySlot& Slot, FEquippedSlot& OutEquipSlot);
-
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Equipment")
 	bool UseItemAtEquipmentSlot(const FEquippedSlot EquippedSlot);
 
 protected:
 
-	FInventorySlot* GetItemAtEquipmentSlot(const FEquippedSlot& EquippedSlot);
+	UFUNCTION()
+	UItem* GetItemAtEquipmentSlot(const FEquippedSlot& EquippedSlot);
 
 	UFUNCTION()
-	bool IsItemEquipped(const FInventorySlot& InventorySlot, FEquippedSlot& EquippedSlot);
+	bool IsItemEquipped(const UItem* Item, FEquippedSlot& EquippedSlot);
 
 	UFUNCTION()
 	bool GetFirstAvailableEquipmentSlot(FGameplayTag Type, FEquippedSlot& OutOpenSlot);
 
 	UFUNCTION()
-	void AddItemToEquipmentSlot(const FEquippedSlot& EquippedSlot, const FInventorySlot& InventorySlot);
+	void AddItemToEquipmentSlot(const FEquippedSlot& EquippedSlot, UItem* Item);
 
 	UFUNCTION()
 	void RemoveItemFromEquipmentSlot(const FEquippedSlot& EquippedSlot);

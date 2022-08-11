@@ -2,26 +2,44 @@
 
 
 #include "UI/UWRPG_InventorySlot.h"
-
-#include "IDetailTreeNode.h"
-#include "ItemTypes.h"
+#include "InventorySystemComponent.h"
 
 
 void UUWRPG_InventorySlot::BeginDestroy()
 {
+	if(InventorySystemComponent && InventoryItem)
+	{
+		InventorySystemComponent->RegisterItemStackCountChangedEvent(InventoryItem).RemoveAll(this);
+	}
+
 	Super::BeginDestroy();
 }
 
-void UUWRPG_InventorySlot::SetupInventorySlot(FInventorySlot& InInventorySlot, UInventorySystemComponent* ISC)
+void UUWRPG_InventorySlot::SetupItemSlot(UItem* InItemSlot, UInventorySystemComponent* ISC)
 {
-	SetInventorySlot(InInventorySlot);
+	SetItem(InItemSlot);
 	SetInventorySystemComponent(ISC);
-	K2_SetupInventorySlot(InInventorySlot);
+
+	if(ISC)
+	{
+		ISC->RegisterItemStackCountChangedEvent(InItemSlot).AddDynamic(this, &UUWRPG_InventorySlot::StackCountChanged);
+	}
+
+
+	K2_SetupItemSlot(InItemSlot);
 }
 
-FInventorySlot UUWRPG_InventorySlot::GetInventorySlot() const
+void UUWRPG_InventorySlot::CleanupItemSlot(UItem* Item, UInventorySystemComponent* ISC)
 {
-	return InventorySlot;
+	if (InventorySystemComponent && InventoryItem)
+	{
+		InventorySystemComponent->RegisterItemStackCountChangedEvent(InventoryItem).RemoveAll(this);
+	}
+}
+
+UItem* UUWRPG_InventorySlot::GetItem() const
+{
+	return InventoryItem;
 }
 
 UInventorySystemComponent* UUWRPG_InventorySlot::GetInventorySystemComponent() const
@@ -29,9 +47,9 @@ UInventorySystemComponent* UUWRPG_InventorySlot::GetInventorySystemComponent() c
 	return InventorySystemComponent;
 }
 
-void UUWRPG_InventorySlot::SetInventorySlot(const FInventorySlot& InInventorySlot)
+void UUWRPG_InventorySlot::SetItem(UItem* Item)
 {
-	InventorySlot = InInventorySlot;
+	InventoryItem = Item;
 }
 
 void UUWRPG_InventorySlot::SetInventorySystemComponent(UInventorySystemComponent* ISC)
@@ -39,7 +57,7 @@ void UUWRPG_InventorySlot::SetInventorySystemComponent(UInventorySystemComponent
 	InventorySystemComponent = ISC;
 }
 
-void UUWRPG_InventorySlot::StackCountChanged(int& NewStackCount)
+void UUWRPG_InventorySlot::StackCountChanged(int OldStackCount, int NewStackCount)
 {
-	K2_StackCountChanged(NewStackCount);
+	K2_StackCountChanged(OldStackCount, NewStackCount);
 }

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Item.h"
-#include "ItemTypes.h"
 #include "Blueprint/UserWidget.h"
 #include "UWRPG_InventorySlot.generated.h"
 
@@ -17,7 +16,7 @@ class RPG_API UUWRPG_InventorySlot : public UUserWidget
 	GENERATED_BODY()
 	
 	UPROPERTY()
-	FInventorySlot InventorySlot;
+	UItem* InventoryItem;
 
 	UPROPERTY()
 	UInventorySystemComponent* InventorySystemComponent;
@@ -25,34 +24,37 @@ class RPG_API UUWRPG_InventorySlot : public UUserWidget
 protected:
 
 	UFUNCTION(BlueprintCallable, Category = "RPG UI | Inventory | Item Slot")
-	FInventorySlot GetInventorySlot() const;
+	UItem* GetItem() const;
 
 	UFUNCTION(BlueprintCallable, Category = "RPG UI | Inventory | Item Slot")
 	UInventorySystemComponent* GetInventorySystemComponent() const;
 
 	UFUNCTION()
-	void SetInventorySlot(const FInventorySlot& InInventorySlot);
+	void SetItem(UItem* Item);
 
 	UFUNCTION()
 	void SetInventorySystemComponent(UInventorySystemComponent* ISC);
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "RPG UI | Inventory | Item Slot", DisplayName = "SetupInventorySlot")
-	void K2_SetupInventorySlot(const FInventorySlot& InInventorySlot);
+	UFUNCTION(BlueprintImplementableEvent, Category = "RPG UI | Inventory | Item Slot", DisplayName = "SetupItemSlot")
+	void K2_SetupItemSlot(const UItem* Item);
 
 public:
 
 	UFUNCTION()
-	void StackCountChanged(int& NewStackCount);
+	void StackCountChanged(int OldStackCount, int NewStackCount);
 
 protected:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "RPG UI | Inventory | Item Slot", DisplayName = "StackCountChanged")
-	void K2_StackCountChanged(const int& NewStackCount);
+	void K2_StackCountChanged(int OldStackCount, int NewStackCount);
 
 	virtual void BeginDestroy() override;
 
 public:
 	UFUNCTION()
-	void SetupInventorySlot(FInventorySlot& InInventorySlot, UInventorySystemComponent* ISC);
+	void SetupItemSlot(UItem* InItemSlot, UInventorySystemComponent* ISC);
+
+	UFUNCTION()
+	void CleanupItemSlot(UItem* Item, UInventorySystemComponent* ISC);
 	
 };

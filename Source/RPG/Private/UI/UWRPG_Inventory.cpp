@@ -14,78 +14,67 @@ void UUWRPG_Inventory::SetupInventoryWidget(UInventorySystemComponent* ISC)
 	ISC->GetOnItemChangedDelegate().AddDynamic(this, &UUWRPG_Inventory::OnInventoryItemChanged);
 
 	// Any items that could be added prior to our inventory widget being setup will need to have item slots created for them
-	TArray<FInventorySlot> InventorySlots;
-	if(ISC->GetInventoryItems(FGameplayTag::EmptyTag, InventorySlots))
+	TArray<UItem*> Items;
+	if(ISC->GetInventoryItems(FGameplayTag::EmptyTag, Items))
 	{
-		for(FInventorySlot InventorySlot : InventorySlots)
+		for(UItem* Item : Items)
 		{
-			AddItemToInventoryWidget(InventorySlot);
+			AddItemToInventoryWidget(Item);
 		}
 	}
 }
 
-void UUWRPG_Inventory::OnInventoryItemChanged(FInventorySlot InventorySlot, EInventorySlotChangeType ChangeType)
+void UUWRPG_Inventory::OnInventoryItemChanged(UItem* Item, EInventorySlotChangeType ChangeType)
 {
 	switch (ChangeType)
 	{
 		case EInventorySlotChangeType::Added :
-			AddItemToInventoryWidget(InventorySlot);
+			AddItemToInventoryWidget(Item);
 			break;
 
 		case EInventorySlotChangeType::Removed :
-			RemoveItemFromInventoryWidget(InventorySlot);
-			break;
-
-		case EInventorySlotChangeType::StackChange :
-			UpdateInventorySlotStackCount(InventorySlot);
+			RemoveItemFromInventoryWidget(Item);
 			break;
 
 		default: break;
 	}
 }
 
-void UUWRPG_Inventory::AddItemToInventoryWidget(FInventorySlot& InventorySlot)
+void UUWRPG_Inventory::AddItemToInventoryWidget(UItem* Item)
 {
-	if(!InventorySlot.IsValid())
+	if(!Item)
 	{
 		return;
 	}
 	
 	check(InventorySlotClass)
 	UUWRPG_InventorySlot* ItemSlot = CreateWidget<UUWRPG_InventorySlot>(this, InventorySlotClass);
-	ItemSlot->SetupInventorySlot(InventorySlot, GetInventorySystemComponent());
+	ItemSlot->SetupItemSlot(Item, GetInventorySystemComponent());
 	InventoryItemHolder->AddChild(ItemSlot);
 
 	// Add our new item to our item slot map
-	ItemInventorySlotMap.Add(InventorySlot.GetGuid(), ItemSlot);
+	ItemInventorySlotMap.Add(Item, ItemSlot);
 }
 
-void UUWRPG_Inventory::RemoveItemFromInventoryWidget(const FInventorySlot& InventorySlot)
+void UUWRPG_Inventory::RemoveItemFromInventoryWidget(UItem* Item)
 {
-	if(UUWRPG_InventorySlot* Widget = GetMapValueFromInventorySlot(InventorySlot))
+	if(UUWRPG_InventorySlot* Widget = GetMapValueFromInventorySlot(Item))
 	{
+		Widget->CleanupItemSlot(Item, GetInventorySystemComponent());
 		Widget->RemoveFromParent();
-		ItemInventorySlotMap.Remove(InventorySlot.GetGuid());
+		ItemInventorySlotMap.Remove(Item);
 	}
 }
 
-void UUWRPG_Inventory::UpdateInventorySlotStackCount(FInventorySlot& InventorySlot)
+UUWRPG_InventorySlot* UUWRPG_Inventory::GetMapValueFromInventorySlot(const UItem* Item)
 {
-	if (UUWRPG_InventorySlot* Widget = GetMapValueFromInventorySlot(InventorySlot))
-	{
-		Widget->StackCountChanged(InventorySlot.StackCount);
-	}
-}
-
-UUWRPG_InventorySlot* UUWRPG_Inventory::GetMapValueFromInventorySlot(const FInventorySlot& InventorySlot)
-{
-	if (!ItemInventorySlotMap.Contains(InventorySlot.GetGuid()))
+	if (!ItemInventorySlotMap.Contains(Item))
 	{
 		return nullptr;
 	}
 
 	// Check if a key exists for the item in our inventory map and remove the item slot from our parent
-	if (UUWRPG_InventorySlot** MapValue = ItemInventorySlotMap.Find(InventorySlot.GetGuid()))
+	if (UUWRPG_InventorySlot** MapValue = ItemInventorySlotMap.Find(Item))
 	{
 		return *(MapValue);
 	}

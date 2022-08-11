@@ -27,7 +27,7 @@ protected:
 
 	/* Map for getting the inventory slot an item references */
 	UPROPERTY()
-	TMap<FGuid, UUWRPG_InventorySlot*> ItemInventorySlotMap;
+	TMap<UItem*, UUWRPG_InventorySlot*> ItemInventorySlotMap;
 
 	UPROPERTY(BlueprintReadOnly)
 	UInventorySystemComponent* InventorySystemComponent;
@@ -35,19 +35,16 @@ protected:
 	void SetInventorySystemComponent(UInventorySystemComponent* ISC) { InventorySystemComponent = ISC; }
 
 	UFUNCTION()
-	void OnInventoryItemChanged(FInventorySlot InventorySlot, EInventorySlotChangeType ChangeType);
+	void OnInventoryItemChanged(UItem* Item, EInventorySlotChangeType ChangeType);
 
 	UFUNCTION(BlueprintCallable, Category = "RPG UI | Inventory")
-	void AddItemToInventoryWidget(FInventorySlot& InventorySlot);
+	void AddItemToInventoryWidget(UItem* Item);
 
 	UFUNCTION()
-	void RemoveItemFromInventoryWidget(const FInventorySlot& InventorySlot);
+	void RemoveItemFromInventoryWidget(UItem* Item);
 
 	UFUNCTION()
-	void UpdateInventorySlotStackCount(FInventorySlot& InventorySlot);
-
-	UFUNCTION()
-	UUWRPG_InventorySlot* GetMapValueFromInventorySlot(const FInventorySlot& InventorySlot);
+	UUWRPG_InventorySlot* GetMapValueFromInventorySlot(const UItem* Item);
 
 	virtual void BeginDestroy() override;
 	

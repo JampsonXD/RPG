@@ -3,6 +3,11 @@
 
 #include "Item.h"
 
+UTexture2D* UItem::K2_GetItemImage()
+{
+	return GetItemImage();
+}
+
 FGameplayTag UItem::GetItemType() const
 {
 	return ItemType;

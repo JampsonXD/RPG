@@ -18,9 +18,4 @@ class RPG_API URPGBFL_UIFunctions : public UBlueprintFunctionLibrary
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category = "RPG UI | Item Data")
-	static FItemUIData MakeItemUIData(const FInventorySlot& InventorySlot);
-
-	UFUNCTION(BlueprintCallable, Category = "RPGBFL Main Functions")
-	static FItemUIData GetItemUIDataFromInventorySlotData(UInventorySystemComponent* ISC, UPARAM(ref) FInventorySlot& InventorySlot);
 };

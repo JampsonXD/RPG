@@ -20,32 +20,33 @@ class INVENTORYSYSTEM_API UItem : public UPrimaryDataAsset, public IItemInterfac
 
 friend UInventorySystemComponent;
 
-protected:
+public:
 
 	// Label for our Item, what the Item Type is
-	UPROPERTY(EditDefaultsOnly, Category = "Item | Info")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item | Info")
 	FGameplayTag ItemType;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item | Info")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item | Info")
 	FName ItemName;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item | Info")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item | Info")
 	FText ItemDescription;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item | Info")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item | Info")
 	TSoftObjectPtr<UTexture2D> ItemImageSoftPointer;
 
 	// If we can be stacked, our max stack count, defaults to -1 if we have unlimited stacks
-	UPROPERTY(EditDefaultsOnly, Category = "Item")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	int32 MaxStackCount;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	bool bConsumeOnUse;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Item")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	bool bIsStackable;
-	
-public:
+
+	UFUNCTION(BlueprintCallable, Category = "Item | Info")
+	UTexture2D* K2_GetItemImage();
 
 	virtual FGameplayTag GetItemType() const override;
 

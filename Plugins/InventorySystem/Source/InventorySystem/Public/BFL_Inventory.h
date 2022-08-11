@@ -19,7 +19,4 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Inventory Helpers")
     static class UInventorySystemComponent* GetInventorySystemComponent(AActor* InActor);
-
-	UFUNCTION(BlueprintPure)
-	static FGuid GetItemGuid(FInventorySlot Item);
 };

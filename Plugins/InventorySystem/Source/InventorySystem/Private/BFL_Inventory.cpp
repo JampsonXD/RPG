@@ -21,8 +21,3 @@ UInventorySystemComponent* UBFL_Inventory::GetInventorySystemComponent(AActor* I
 
 	return Interface->GetInventorySystemComponent();
 }
-
-FGuid UBFL_Inventory::GetItemGuid(FInventorySlot Item)
-{
-	return Item.GetGuid();
-}
