@@ -15,7 +15,7 @@ void UUWRPG_Inventory::SetupInventoryWidget(UInventorySystemComponent* ISC)
 
 	// Any items that could be added prior to our inventory widget being setup will need to have item slots created for them
 	TArray<UItem*> Items;
-	if(ISC->GetInventoryItems(FGameplayTag::EmptyTag, Items))
+	if(ISC->GetInventoryItems(FPrimaryAssetType(), Items))
 	{
 		for(UItem* Item : Items)
 		{

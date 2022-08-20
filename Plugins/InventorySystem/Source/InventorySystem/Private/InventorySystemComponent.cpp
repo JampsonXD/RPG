@@ -38,6 +38,12 @@ bool UInventorySystemComponent::AddItem(UItem* Item, int StackCount, bool bAutoE
 		}
 
 		OnItemChanged.Broadcast(Item, OldSlot.StackCount == 0 ? EInventorySlotChangeType::Added : EInventorySlotChangeType::StackChange);
+
+		if(bAutoEquip)
+		{
+			TryEquipItem(Item);
+		}
+
 		return true;
 	}
 
@@ -82,9 +88,9 @@ bool UInventorySystemComponent::RemoveItem(UItem* Item, int StackCount)
 	return true;
 }
 
-bool UInventorySystemComponent::GetInventoryItems(FGameplayTag ItemType, TArray<UItem*>& OutItems)
+bool UInventorySystemComponent::GetInventoryItems(FPrimaryAssetType ItemType, TArray<UItem*>& OutItems)
 {
-	if(ItemType == FGameplayTag::EmptyTag)
+	if(!ItemType.IsValid())
 	{
 		InventoryMap.GetKeys(OutItems);
 		return !OutItems.IsEmpty();
@@ -92,7 +98,7 @@ bool UInventorySystemComponent::GetInventoryItems(FGameplayTag ItemType, TArray<
 
 	for(TPair<UItem*, FInventorySlotData>& Pair : InventoryMap)
 	{
-		if(Pair.Key && Pair.Key->GetItemType().MatchesTag(ItemType))
+		if(Pair.Key && Pair.Key->GetItemType() == ItemType)
 		{
 			OutItems.Add(Pair.Key);
 		}
@@ -118,6 +124,15 @@ int UInventorySystemComponent::GetItemStackCount(const UItem* Item)
 
 void UInventorySystemComponent::InitInventorySystemComponent()
 {
+	// Remove any items before adding our defaults
+	for(TPair<UItem*, FInventorySlotData>& Pair : InventoryMap)
+	{
+		if(Pair.Key)
+		{
+			RemoveItem(Pair.Key, -1);
+		}
+	}
+
 	if(!DefaultEquipmentSlots.IsEmpty())
 	{
 		EquipmentMap.Reserve(DefaultEquipmentSlots.Num());
@@ -125,7 +140,7 @@ void UInventorySystemComponent::InitInventorySystemComponent()
 		/* Loop through our map of slot types to slot amounts
 		 * Add a new equipment slot for each slot up the total amount
 		 */
-		for(const TPair<FGameplayTag, int32>& Pair : DefaultEquipmentSlots)
+		for(const TPair<FPrimaryAssetType, int32>& Pair : DefaultEquipmentSlots)
 		{
 			for(int i = 0; i < Pair.Value; i++)
 			{
@@ -180,6 +195,40 @@ bool UInventorySystemComponent::GetInventorySlotForItem(UItem* Item, FInventoryS
 	return false;
 }
 
+bool UInventorySystemComponent::TryEquipItem(UItem* Item, FEquippedSlot OptionalSlot)
+{
+	if(!Item)
+	{
+		return false;
+	}
+
+	FEquippedSlot Slot = OptionalSlot;
+
+	if(!Slot.IsValidForItem(Item))
+	{
+		GetFirstAvailableEquipmentSlot(Item->GetItemType(), Slot);
+	}
+
+	if(!Slot.IsValid())
+	{
+		return false;
+	}
+
+	if(!EquipmentMap.Contains(Slot))
+	{
+		return false;
+	}
+
+	// See if we need to remove the item from our slot before continuing
+	if(GetItemAtEquipmentSlot(Slot))
+	{
+		RemoveItemFromEquipmentSlot(Slot);
+	}
+
+	AddItemToEquipmentSlot(Slot, Item);
+	return true;
+}
+
 bool UInventorySystemComponent::UseItemAtEquipmentSlot(const FEquippedSlot EquippedSlot)
 {
 	UItem* Item = GetItemAtEquipmentSlot(EquippedSlot);
@@ -195,6 +244,29 @@ bool UInventorySystemComponent::UseItemAtEquipmentSlot(const FEquippedSlot Equip
 	}
 
 	return true;
+}
+
+int UInventorySystemComponent::GetTotalEquipmentSlotsOfType(FPrimaryAssetType Type)
+{
+	if(!Type.IsValid())
+	{
+		return 0;
+	}
+
+	int HighestValue = -1;
+
+	for(TPair<FEquippedSlot, UItem*>& Pair : EquipmentMap)
+	{
+		if(Type == Pair.Key.SlotType)
+		{
+			if(Pair.Key.SlotNumber > HighestValue)
+			{
+				HighestValue = Pair.Key.SlotNumber;
+			}
+		}
+	}
+
+	return HighestValue;
 }
 
 UItem* UInventorySystemComponent::GetItemAtEquipmentSlot(const FEquippedSlot& EquippedSlot)
@@ -224,7 +296,7 @@ bool UInventorySystemComponent::IsItemEquipped(const UItem* Item, FEquippedSlot&
 	return false;
 }
 
-bool UInventorySystemComponent::GetFirstAvailableEquipmentSlot(FGameplayTag Type, FEquippedSlot& OutOpenSlot)
+bool UInventorySystemComponent::GetFirstAvailableEquipmentSlot(FPrimaryAssetType Type, FEquippedSlot& OutOpenSlot)
 {
 	if(!Type.IsValid())
 	{
@@ -234,7 +306,7 @@ bool UInventorySystemComponent::GetFirstAvailableEquipmentSlot(FGameplayTag Type
 	for(TPair<FEquippedSlot, UItem*>& Slot : EquipmentMap)
 	{
 		FEquippedSlot& Key = Slot.Key;
-		if(Type.MatchesTag(Key.SlotType) && !Slot.Value)
+		if(Type == Key.SlotType && !Slot.Value)
 		{
 			OutOpenSlot = Slot.Key;
 			return true;
@@ -256,4 +328,9 @@ void UInventorySystemComponent::RemoveItemFromEquipmentSlot(const FEquippedSlot&
 	UItem* Item = *(EquipmentMap.Find(EquippedSlot));
 	EquipmentMap.Add(EquippedSlot, nullptr);
 	OnEquipmentSlotChanged.Broadcast(EquippedSlot, Item, EEquipmentSlotChangeType::Removed);
+}
+
+FOnEquipmentSlotChanged& UInventorySystemComponent::GetEquipmentSlotChangedDelegate()
+{
+	return OnEquipmentSlotChanged;
 }

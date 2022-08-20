@@ -6,6 +6,8 @@
 #include "Items/Actors/RPG_WeaponActor.h"
 #include "RPG_GunActor.generated.h"
 
+class URPG_SuperGun;
+class URPG_WeaponEffectDataAsset;
 /**
  * 
  */
@@ -28,25 +30,35 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int CurrentClipSize;
 
-	/* Pointer to the data asset that represents the type of ammo this weapon will use */
+	/* Pointer to the data asset that represents our gun */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	UItem* AmmoType;
+	URPG_SuperGun* GunData;
 
-	/* Ability Set Active Handle, Handle for the Active Ability Set while this weapon is in use and granting effects */
-	UPROPERTY(BlueprintReadOnly)
-	FAbilitySetActiveHandle AbilitySetActiveHandle;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	URPG_WeaponEffectDataAsset* EffectsData;
+
+	UPROPERTY()
+	UUserWidget* CrosshairWidget;
+
+protected:
+
+	virtual void SetupItem_Implementation(UItem* ItemDataAsset) override;
+
+	virtual void EquipItem_Implementation(ARPG_Character* EquippingCharacter, URPG_AbilitySystemComponent* RPGAbilitySystemComponent) override;
+
+	virtual void UnEquipItem_Implementation(ARPG_Character* EquippingCharacter, URPG_AbilitySystemComponent* RPGAbilitySystemComponent) override;
 
 public:
 
-	UFUNCTION(BlueprintNativeEvent, Category = "RPG Gun")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "RPG Gun")
 	bool CanFire();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "RPG Gun")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "RPG Gun")
 	bool CanReload();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "RPG Gun")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "RPG Gun")
 	void Reload();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "RPG Gun")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "RPG Gun")
 	void FireWeapon();
 };

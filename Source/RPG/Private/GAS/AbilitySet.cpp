@@ -9,13 +9,17 @@
 
 void FAbilitySetActiveHandle::Remove()
 {
-	RemoveAbilities();
-	RemoveActiveGameplayEffects();
-	RemoveAttributeSets();
+	if(AbilitySystemComponent.IsValid())
+	{
+		RemoveAbilities();
+		RemoveActiveGameplayEffects();
+		RemoveAttributeSets();
+	}
 
 	AbilityHandles.Reset();
 	GameplayEffectHandles.Reset();
 	AttributeSets.Reset();
+	AbilitySystemComponent = nullptr;
 }
 
 UAbilitySet::UAbilitySet(const FObjectInitializer& ObjectInitializer)

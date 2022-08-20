@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Items/RPG_SuperWeapon.h"
+#include "DataAssets/RPG_WeaponEffectDataAsset.h"
 #include "RPG_SuperGun.generated.h"
 
 /**
@@ -14,26 +15,21 @@ class RPG_API URPG_SuperGun : public URPG_SuperWeapon
 {
 	GENERATED_BODY()
 
-protected:
-
-	UPROPERTY(EditDefaultsOnly, Category = "RPG Gun")
-	int ClipSize;
-
-	UPROPERTY(EditDefaultsOnly, Category = "RPG Gun")
-	int FireRate;
-
-	UPROPERTY(EditDefaultsOnly, Category = "RPG Gun")
-	EGunFireMode FireMode;
-
 public:
 
-	UFUNCTION(BlueprintPure, Category = "RPG Gun")
-	virtual int GetMaxClipSize() const;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RPG Gun")
+	int ClipSize;
 
-	UFUNCTION(BlueprintPure, Category = "RPG Gun")
-	virtual float GetFireRate() const;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RPG Gun")
+	int FireRate;
 
-	UFUNCTION(BlueprintPure, Category = "RPG Gun")
-	virtual EGunFireMode GetFireMode() const;
-	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RPG Gun")
+	EGunFireMode FireMode;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RPG Gun | Effects")
+	URPG_WeaponEffectDataAsset* WeaponEffects;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RPG Gun | UI")
+	TSubclassOf<UUserWidget> CrosshairWidget;
+
 };

@@ -24,7 +24,7 @@ class INVENTORYSYSTEM_API IItemInterface
 public:
 
 	/* The type of item this is */
-	virtual FGameplayTag GetItemType() const = 0;
+	virtual FPrimaryAssetType GetItemType() const = 0;
 
 	/* Whether the item is stackable or not */
 	virtual bool IsStackable() const = 0;

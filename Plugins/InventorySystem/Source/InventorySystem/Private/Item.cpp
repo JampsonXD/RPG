@@ -3,12 +3,7 @@
 
 #include "Item.h"
 
-UTexture2D* UItem::K2_GetItemImage()
-{
-	return GetItemImage();
-}
-
-FGameplayTag UItem::GetItemType() const
+FPrimaryAssetType UItem::GetItemType() const
 {
 	return ItemType;
 }
@@ -25,7 +20,7 @@ FText UItem::GetItemDescription() const
 
 UTexture2D* UItem::GetItemImage() const
 {
-	return ItemImageSoftPointer.LoadSynchronous();
+	return ItemImageSoftPointer;
 }
 
 bool UItem::IsStackable() const
@@ -41,4 +36,14 @@ int UItem::GetMaxStackCount() const
 bool UItem::ConsumeOnUse() const
 {
 	return bConsumeOnUse;
+}
+
+FString UItem::GetIdentifierString() const
+{
+	return GetPrimaryAssetId().ToString();
+}
+
+FPrimaryAssetId UItem::GetPrimaryAssetId() const
+{
+	return FPrimaryAssetId(ItemType, GetFName());
 }

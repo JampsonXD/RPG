@@ -64,7 +64,7 @@ public:
 	bool RemoveItem(UItem* Item, int StackCount = 1);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Items")
-	bool GetInventoryItems(FGameplayTag ItemType, TArray<UItem*>& OutItems);
+	bool GetInventoryItems(FPrimaryAssetType ItemType, TArray<UItem*>& OutItems);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Items")
 	int GetItemStackCount(const UItem* Item);
@@ -111,27 +111,34 @@ protected:
 
 	/* Default map of item slot types and how many slots to apply for each type when our component is initialized */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory System Component | Equipment")
-	TMap<FGameplayTag, int32> DefaultEquipmentSlots;
+	TMap<FPrimaryAssetType, int32> DefaultEquipmentSlots;
 
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Equipment")
+	bool TryEquipItem(UItem* Item, FEquippedSlot OptionalSlot = FEquippedSlot());
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Equipment")
 	bool UseItemAtEquipmentSlot(const FEquippedSlot EquippedSlot);
 
-protected:
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Equipment")
+	int GetTotalEquipmentSlotsOfType(FPrimaryAssetType Type);
 
-	UFUNCTION()
-	UItem* GetItemAtEquipmentSlot(const FEquippedSlot& EquippedSlot);
-
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Equipment")
 	bool IsItemEquipped(const UItem* Item, FEquippedSlot& EquippedSlot);
 
-	UFUNCTION()
-	bool GetFirstAvailableEquipmentSlot(FGameplayTag Type, FEquippedSlot& OutOpenSlot);
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Equipment")
+	UItem* GetItemAtEquipmentSlot(const FEquippedSlot& EquippedSlot);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Equipment")
+	bool GetFirstAvailableEquipmentSlot(FPrimaryAssetType Type, FEquippedSlot& OutOpenSlot);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Equipment")
 	void AddItemToEquipmentSlot(const FEquippedSlot& EquippedSlot, UItem* Item);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Equipment")
 	void RemoveItemFromEquipmentSlot(const FEquippedSlot& EquippedSlot);
+
+	UFUNCTION()
+	FOnEquipmentSlotChanged& GetEquipmentSlotChangedDelegate();
 };

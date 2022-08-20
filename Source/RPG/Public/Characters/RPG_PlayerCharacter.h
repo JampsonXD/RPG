@@ -19,17 +19,12 @@ class RPG_API ARPG_PlayerCharacter : public ARPG_Character, public IInteractionS
 {
 	GENERATED_BODY()
 
-	/** First Person Spring Arm */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* FirstPersonSpringArm;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* FollowCamera;
 
-	/** Scene Component that our first person camera is attached to */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	USceneComponent* FirstPersonCameraParent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* SpringArm;
 
-	/** First Person Camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FirstPersonCamera;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	class UInteractionSystemComponent* InteractionSystemComponent;
@@ -81,15 +76,13 @@ protected:
 
 public:
 
-
-
 	/** Returns our Interaction System Component **/
 	virtual UInteractionSystemComponent* GetInteractionSystemComponent() const override;
-	/** Returns the First Person Spring Arm **/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "First Person")
-	FORCEINLINE class USpringArmComponent* GetFirstPersonSpringArm() const { return FirstPersonSpringArm; }
-	/** Returns the First Person Camera **/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "First Person")
-	FORCEINLINE class UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE UCameraComponent* GetCameraComponent() const { return FollowCamera; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE USpringArmComponent* GetSpringArmComponent() const { return SpringArm; }
 	
 };

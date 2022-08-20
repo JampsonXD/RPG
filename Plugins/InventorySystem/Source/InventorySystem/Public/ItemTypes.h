@@ -33,23 +33,23 @@ struct FEquippedSlot
 
 	bool operator==(const FEquippedSlot& Other) const
 	{
-		return SlotType.MatchesTagExact(Other.SlotType) && SlotNumber == Other.SlotNumber;
+		return SlotType == Other.SlotType && SlotNumber == Other.SlotNumber;
 	}
 
 	FEquippedSlot()
 	{
-		SlotType = FGameplayTag::EmptyTag;
+		SlotType = FPrimaryAssetType();
 		SlotNumber = -1;
 	}
 
-	FEquippedSlot(FGameplayTag Tag, int InSlotNumber)
+	FEquippedSlot(FPrimaryAssetType Type, int InSlotNumber)
 	{
-		SlotType = Tag;
+		SlotType = Type;
 		SlotNumber = InSlotNumber;
 	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTag SlotType;
+	FPrimaryAssetType SlotType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int SlotNumber;
@@ -65,6 +65,11 @@ struct FEquippedSlot
 	bool IsValid() const
 	{
 		return SlotType.IsValid() && SlotNumber >= 0;
+	}
+
+	bool IsValidForItem(const UItem* Item) const
+	{
+		return Item && Item->ItemType == this->SlotType && SlotNumber >= 0;
 	}
 };
 

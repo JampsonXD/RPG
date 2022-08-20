@@ -2,7 +2,9 @@
 
 #include "RPG_Character.h"
 
+#include "BFL_Inventory.h"
 #include "RPGAssetManager.h"
+#include "RPG_PlayerController.h"
 #include "RPG_PlayerState.h"
 #include "Components/CapsuleComponent.h"
 #include "DataAssets/RPG_CharacterDataAsset.h"
@@ -10,9 +12,8 @@
 #include "GameFramework/Controller.h"
 #include "GameplayTag/RPG_TagLibrary.h"
 #include "GAS/RPG_AbilitySystemComponent.h"
-#include "GAS/RPG_GameplayAbility.h"
-#include "RPG/RPG.h"
 #include "GAS/RPG_AttributeSet.h"
+#include "Items/Actors/RPG_WeaponActor.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ARPGCharacter
@@ -36,7 +37,33 @@ ARPG_Character::ARPG_Character(const FObjectInitializer& ObjectInitializer) : Su
 
 UAbilitySystemComponent* ARPG_Character::GetAbilitySystemComponent() const
 {
-	return AbilitySystemComponent.Get();
+	if (AbilitySystemComponent.IsValid())
+	{
+		return AbilitySystemComponent.Get();
+	}
+
+	return nullptr;
+}
+
+URPG_AbilitySystemComponent* ARPG_Character::GetRPGAbilitySystemComponent() const
+{
+	if(AbilitySystemComponent.IsValid())
+	{
+		return AbilitySystemComponent.Get();
+	}
+
+	return nullptr;
+}
+
+UInventorySystemComponent* ARPG_Character::GetInventorySystemComponent() const
+{
+	if(InventorySystemComponent.IsValid())
+	{
+		return InventorySystemComponent.Get();
+	}
+
+	APlayerState* PS = GetPlayerState();
+	return PS ? UBFL_Inventory::GetInventorySystemComponent(PS) : nullptr;
 }
 
 float ARPG_Character::GetCharacterLevel()
@@ -47,6 +74,15 @@ float ARPG_Character::GetCharacterLevel()
 	}
 
 	return 1.f;
+}
+
+void ARPG_Character::AttachItem(AActor* Actor, const FEquipData& EquipData)
+{
+	Actor->SetActorRelativeTransform(EquipData.RelativeTransform);
+
+	Actor->AttachToComponent(GetMesh(),
+		FAttachmentTransformRules::KeepRelativeTransform, EquipData.AttachName);
+
 }
 
 void ARPG_Character::PossessedBy(AController* NewController)
@@ -70,9 +106,24 @@ void ARPG_Character::PossessedBy(AController* NewController)
 		{
 			DefaultAbilitySetHandle = AbilitySystemComponent->AddAbilitySet(DefaultAbilitySet, this);
 		}
+
+		// Initiate our Inventory System
+		InventorySystemComponent = PS->GetInventorySystemComponent();
+		InventorySystemComponent->InitActorInfo(PS, this);
+		InventorySystemComponent->GetEquipmentSlotChangedDelegate().AddDynamic(this, &ARPG_Character::OnEquipmentSlotChanged);
+		InventorySystemComponent->InitInventorySystemComponent();
 	}
 }
 
+void ARPG_Character::BeginDestroy()
+{
+	if(InventorySystemComponent.IsValid())
+	{
+		InventorySystemComponent->GetEquipmentSlotChangedDelegate().RemoveAll(this);
+	}
+
+	Super::BeginDestroy();
+}
 
 
 void ARPG_Character::InitAttributeSets(class ARPG_PlayerState* PS)

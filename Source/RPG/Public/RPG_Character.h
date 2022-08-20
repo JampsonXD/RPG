@@ -4,22 +4,25 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "InventorySystemInterface.h"
 #include "RPG_Types.h"
 #include "Characters/RPGCharacterInterface.h"
-#include "DataAssets/RPG_CharacterDataAsset.h"
 #include "GameFramework/Character.h"
 #include "GAS/AbilitySet.h"
-#include "Items/ArmorItem.h"
+#include "Items/RPG_ItemTypes.h"
 #include "RPG_Character.generated.h"
 
+class ARPG_WeaponActor;
 UCLASS(config=Game)
-class ARPG_Character : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface, public IRPGCharacterInterface
+class ARPG_Character : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface, public IRPGCharacterInterface, public IInventorySystemInterface
 {
 	GENERATED_BODY()
 
 protected:
 	
 	virtual void PossessedBy(AController* NewController) override;
+
+	virtual void BeginDestroy() override;
 
 	/* Primary Asset Id used to load data related to our character */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Data")
@@ -30,6 +33,9 @@ protected:
 
 	// Weak Object Reference to our Attribute Set
 	TWeakObjectPtr<class URPG_AttributeSet> AttributeSet;
+
+	// Weak Object Reference to our Inventory System Component
+	TWeakObjectPtr<class UInventorySystemComponent> InventorySystemComponent;
 
 	// Default Ability Set to grant our player
 	UPROPERTY(EditDefaultsOnly, Category = "GAS")
@@ -64,12 +70,25 @@ protected:
 
 	bool IsJumping_Implementation() const override;
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnEquipmentSlotChanged(FEquippedSlot EquippedSlotData, UItem* Item, EEquipmentSlotChangeType ChangeType);
+
 public:
 	ARPG_Character(const FObjectInitializer& ObjectInitializer);
 
+	UFUNCTION(BlueprintCallable)
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	UFUNCTION(BlueprintCallable)
+	virtual URPG_AbilitySystemComponent* GetRPGAbilitySystemComponent() const;
+
+	UFUNCTION(BlueprintCallable)
+	virtual UInventorySystemComponent* GetInventorySystemComponent() const override;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure , Category = "Attributes | Character Level")
 	float GetCharacterLevel();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Item Attach")
+	void AttachItem(AActor* Actor, const FEquipData& EquipData);
 };
 

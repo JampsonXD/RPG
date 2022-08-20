@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Item.h"
 #include "RPG_SuperItem.h"
 #include "RPG_Types.h"
 #include "ArmorItem.generated.h"

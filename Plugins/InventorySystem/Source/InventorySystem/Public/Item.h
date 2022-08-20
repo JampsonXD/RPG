@@ -23,32 +23,32 @@ friend UInventorySystemComponent;
 public:
 
 	// Label for our Item, what the Item Type is
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item | Info")
-	FGameplayTag ItemType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Info")
+	FPrimaryAssetType ItemType;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item | Info")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Info")
 	FName ItemName;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item | Info")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Info")
 	FText ItemDescription;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Info")
+	TSubclassOf<AActor> ItemInstanceClass;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item | Info")
-	TSoftObjectPtr<UTexture2D> ItemImageSoftPointer;
+	UTexture2D* ItemImageSoftPointer;
 
 	// If we can be stacked, our max stack count, defaults to -1 if we have unlimited stacks
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Info")
 	int32 MaxStackCount;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Info")
 	bool bConsumeOnUse;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Info")
 	bool bIsStackable;
 
-	UFUNCTION(BlueprintCallable, Category = "Item | Info")
-	UTexture2D* K2_GetItemImage();
-
-	virtual FGameplayTag GetItemType() const override;
+	virtual FPrimaryAssetType GetItemType() const override;
 
 	virtual FName GetItemName() const;
 
@@ -61,4 +61,9 @@ public:
 	virtual int GetMaxStackCount() const override;
 
 	virtual bool ConsumeOnUse() const override;
+
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	FString GetIdentifierString() const;
+
+	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 };

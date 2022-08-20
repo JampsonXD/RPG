@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Items/EquippableItemInterface.h"
 #include "Items/RPG_SuperWeapon.h"
 #include "RPG_WeaponActor.generated.h"
 
 struct FItemActorData;
 UCLASS()
-class RPG_API ARPG_WeaponActor : public AActor
+class RPG_API ARPG_WeaponActor : public AActor, public IEquippableItemInterface
 {
 	GENERATED_BODY()
 
@@ -18,13 +19,16 @@ class RPG_API ARPG_WeaponActor : public AActor
 	USkeletalMeshComponent* WeaponMesh;
 
 	UPROPERTY()
-	URPG_SuperWeapon* WeaponData;
-
-	UPROPERTY()
 	UInventorySystemComponent* InventorySystemComponent;
 
 	UPROPERTY()
 	AActor* OwningActor;
+
+	UPROPERTY()
+	UAbilitySet* AbilitySet;
+
+	UPROPERTY()
+	FAbilitySetActiveHandle AbilitySetActiveHandle;
 
 public:	
 	// Sets default values for this actor's properties
@@ -38,14 +42,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION()
-	virtual void InitializeWeapon();
+	virtual void SetupItem_Implementation(UItem* ItemDataAsset) override;
+
+	virtual void EquipItem_Implementation(ARPG_Character* EquippingCharacter, URPG_AbilitySystemComponent* RPGAbilitySystemComponent) override;
+
+	virtual void UnEquipItem_Implementation(ARPG_Character* EquippingCharacter, URPG_AbilitySystemComponent* RPGAbilitySystemComponent) override;
 
 	UFUNCTION(BlueprintPure)
 	virtual USkeletalMeshComponent* GetWeaponMesh() const;
-
-	UFUNCTION(BlueprintPure)
-	virtual URPG_SuperWeapon* GetWeaponData() const;
 
 	UFUNCTION(BlueprintPure)
 	virtual UInventorySystemComponent* GetOwningInventorySystemComponent() const;

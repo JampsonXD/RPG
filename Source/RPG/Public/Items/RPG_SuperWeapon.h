@@ -16,28 +16,20 @@ class RPG_API URPG_SuperWeapon : public URPG_SuperItem
 {
 	GENERATED_BODY()
 
-protected:
+public:
 
-	UPROPERTY(EditDefaultsOnly, Category = "RPG Weapon")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RPG Weapon")
 	EWeaponEquipSlot EquipSlot;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RPG Weapon")
+	USkeletalMesh* Mesh;
 
-	UPROPERTY(EditDefaultsOnly, Category = "RPG Weapon")
-	USkeletalMesh* WeaponMesh;
-
-	UPROPERTY(EditDefaultsOnly, Category = "RPG Weapon")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RPG Weapon")
 	FEquipData EquipData;
 
-public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RPG Weapon")
+	TSubclassOf<UAnimInstance> AnimationClass;
 
 	URPG_SuperWeapon(const FObjectInitializer& ObjectInitializer);
 
-	UFUNCTION(BlueprintPure, Category = "RPG Weapon")
-	virtual EWeaponEquipSlot GetEquipSlot() const;
-
-	UFUNCTION(BlueprintPure, Category = "RPG Weapon")
-	virtual USkeletalMesh* GetWeaponMesh() const;
-
-	UFUNCTION(BlueprintPure, Category = "RPG Weapon")
-	virtual FEquipData GetEquipData() const;
 };

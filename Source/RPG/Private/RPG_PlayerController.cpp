@@ -4,6 +4,7 @@
 #include "RPG_PlayerController.h"
 
 #include "AbilitySystemGlobals.h"
+#include "BFL_Inventory.h"
 #include "InventorySystemComponent.h"
 #include "QuestSystemComponent.h"
 #include "RPGBFL_MainFunctions.h"
@@ -15,14 +16,17 @@
 
 ARPG_PlayerController::ARPG_PlayerController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	InventorySystemComponent = CreateDefaultSubobject<UInventorySystemComponent>(TEXT("Inventory System Component"));
-
 	QuestSystemComponent = CreateDefaultSubobject<UQuestSystemComponent>(TEXT("Quest System Component"));
 }
 
 UInventorySystemComponent* ARPG_PlayerController::GetInventorySystemComponent() const
 {
-	return InventorySystemComponent;
+	if(InventorySystemComponent.IsValid())
+	{
+		return InventorySystemComponent.Get();
+	}
+
+	return UBFL_Inventory::GetInventorySystemComponent(PlayerState);
 }
 
 UQuestSystemComponent* ARPG_PlayerController::GetQuestSystemComponent() const
@@ -56,11 +60,12 @@ void ARPG_PlayerController::BeginPlay()
 void ARPG_PlayerController::CustomBeginPlay()
 {
 	ARPG_PlayerState* PS = GetPlayerState<ARPG_PlayerState>();
+	InventorySystemComponent = PS->GetInventorySystemComponent();
+
 	URPG_AbilitySystemComponent* ASC = Cast<URPG_AbilitySystemComponent>(PS->GetAbilitySystemComponent());
 
 	SetupRPGHUD(ASC);
 	SetupInventoryWidget();
-	GetInventorySystemComponent()->InitInventorySystemComponent();
 }
 
 void ARPG_PlayerController::WaitAbilitySystemComponentAndPlayerState()
@@ -175,7 +180,6 @@ void ARPG_PlayerController::ToggleInventory()
 void ARPG_PlayerController::OnPossess(APawn* PossessedPawn)
 {
 	Super::OnPossess(PossessedPawn);
-	InventorySystemComponent->InitActorInfo(this, PossessedPawn);
 }
 
 void ARPG_PlayerController::ShowDamagePopup()

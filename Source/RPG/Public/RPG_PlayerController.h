@@ -20,13 +20,13 @@ class RPG_API ARPG_PlayerController : public APlayerController, public IInventor
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory System Component", meta = (AllowPrivateAccess = "true"))
-	class UInventorySystemComponent* InventorySystemComponent;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Quest System Component", meta = (AllowPrivateAccess = "true"))
 	class UQuestSystemComponent* QuestSystemComponent;
 	
 protected:
+
+	UPROPERTY(BlueprintReadOnly)
+	TSoftObjectPtr<UInventorySystemComponent> InventorySystemComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG Player Controller | HUD")
 	TSubclassOf<UUWRPG_HUD> HUDClass;

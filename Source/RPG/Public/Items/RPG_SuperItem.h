@@ -15,19 +15,10 @@ class RPG_API URPG_SuperItem : public UItem
 {
 	GENERATED_BODY()
 
-protected:
-
-	UPROPERTY(EditDefaultsOnly, Category = "RPG Item | Ability Set")
-	UAbilitySet* ItemAbilitySet;
-
-	UPROPERTY(BlueprintReadWrite, Category = "RPG Item | Ability Set")
-	FAbilitySetActiveHandle ItemAbilitySetHandle;
-
 public:
 
-	URPG_SuperItem(const FObjectInitializer& ObjectInitializer);
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RPG Item")
+	UAbilitySet* ItemAbilitySet;
 
-	void AddAbilitySet(UAbilitySystemComponent* AbilitySystemComponent, bool bShouldReactivate = false);
-	
-	void RemoveAbilitySet();
+	URPG_SuperItem(const FObjectInitializer& ObjectInitializer);
 };

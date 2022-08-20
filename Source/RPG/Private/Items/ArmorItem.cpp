@@ -10,6 +10,7 @@ UArmorItem::UArmorItem(const class FObjectInitializer& ObjectInitializer) : Supe
 	MaxStackCount = 1;
 	ArmorMesh = nullptr;
 	EquipSlot = EArmorEquipSlot::None;
+	ItemType = FPrimaryAssetType("Armor");
 }
 
 USkeletalMesh* UArmorItem::GetArmorMesh() const

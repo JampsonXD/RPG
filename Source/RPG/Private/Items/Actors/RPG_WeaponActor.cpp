@@ -2,7 +2,10 @@
 
 
 #include "Items/Actors/RPG_WeaponActor.h"
+
+#include "RPG_Character.h"
 #include "RPG_Types.h"
+#include "GAS/RPG_AbilitySystemComponent.h"
 
 // Sets default values
 ARPG_WeaponActor::ARPG_WeaponActor()
@@ -26,19 +29,32 @@ void ARPG_WeaponActor::Tick(float DeltaTime)
 
 }
 
-void ARPG_WeaponActor::InitializeWeapon()
+void ARPG_WeaponActor::SetupItem_Implementation(UItem* ItemDataAsset)
 {
+	ensure(ItemDataAsset);
+	const URPG_SuperWeapon* WeaponData = CastChecked<URPG_SuperWeapon>(ItemDataAsset);
+	WeaponMesh->SetSkeletalMesh(WeaponData->Mesh);
+	AbilitySet = WeaponData->ItemAbilitySet;
+}
 
+void ARPG_WeaponActor::EquipItem_Implementation(ARPG_Character* EquippingCharacter,
+	URPG_AbilitySystemComponent* RPGAbilitySystemComponent)
+{
+	if(AbilitySet)
+	{
+		AbilitySetActiveHandle = AbilitySet->AddAbilitySet(RPGAbilitySystemComponent, this);
+	}
+}
+
+void ARPG_WeaponActor::UnEquipItem_Implementation(ARPG_Character* EquippingCharacter,
+	URPG_AbilitySystemComponent* RPGAbilitySystemComponent)
+{
+	AbilitySetActiveHandle.Remove();
 }
 
 USkeletalMeshComponent* ARPG_WeaponActor::GetWeaponMesh() const
 {
 	return WeaponMesh;
-}
-
-URPG_SuperWeapon* ARPG_WeaponActor::GetWeaponData() const
-{
-	return WeaponData;
 }
 
 UInventorySystemComponent* ARPG_WeaponActor::GetOwningInventorySystemComponent() const

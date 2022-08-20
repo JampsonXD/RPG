@@ -10,6 +10,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/CapsuleComponent.h"
 
 ARPG_PlayerCharacter::ARPG_PlayerCharacter(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -17,27 +18,27 @@ ARPG_PlayerCharacter::ARPG_PlayerCharacter(const FObjectInitializer& ObjectIniti
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 
-					/* First Person */
-	/****************************************************/
-	/****************************************************/
 
-	GetMesh()->SetupAttachment(RootComponent);
+	// Mesh Setup
 	GetMesh()->SetRelativeLocation(FVector(0, 0, -90.f));
 	GetMesh()->SetRelativeRotation(FRotator(0, 0, -90.f));
 
-	FirstPersonCameraParent = CreateDefaultSubobject<USceneComponent>(TEXT("Camera Parent Scene Component"));
-	FirstPersonCameraParent->SetupAttachment(GetMesh(), TEXT("SOCKET_Camera"));
+	// Camera Setup
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
+	SpringArm->SetupAttachment(GetCapsuleComponent());
+	SpringArm->SetRelativeLocation(FVector(0.f, 0.f, 90.f));
+	SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
+	SpringArm->bUsePawnControlRotation = true;
+	SpringArm->bEnableCameraLag = true;
+	SpringArm->bEnableCameraRotationLag = true;
+	SpringArm->CameraLagSpeed = 10.f;
+	SpringArm->CameraRotationLagSpeed = 50.f;
+	SpringArm->CameraLagMaxDistance = 500.f;
 
-	FirstPersonSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("First Person Springarm"));
-	FirstPersonSpringArm->SetupAttachment(FirstPersonCameraParent);
-	FirstPersonSpringArm->SetRelativeLocation(FVector::ZeroVector);
-
-	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("First Person Camera"));
-	FirstPersonCamera->SetupAttachment(FirstPersonSpringArm);
-	FirstPersonCamera->FieldOfView = 97.f;
-	FirstPersonCamera->SetAutoActivate(true);
-
-
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Follow Camera"));
+	FollowCamera->SetupAttachment(SpringArm);
+	FollowCamera->SetFieldOfView(97.f);
+	
 
 				/* Interaction System Component */
 	/****************************************************/

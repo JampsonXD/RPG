@@ -3,6 +3,7 @@
 
 #include "RPG_PlayerState.h"
 
+#include "InventorySystemComponent.h"
 #include "GAS/RPG_AbilitySystemComponent.h"
 #include "GAS/RPG_AttributeSet.h"
 
@@ -15,9 +16,16 @@ ARPG_PlayerState::ARPG_PlayerState(const FObjectInitializer& ObjectInitializer) 
 	AbilitySystemComponent->ReplicationMode = EGameplayEffectReplicationMode::Full;
 
 	AttributeSet = CreateDefaultSubobject<URPG_AttributeSet>(TEXT("Attribute Set"));
+
+	InventorySystemComponent = CreateDefaultSubobject<UInventorySystemComponent>(TEXT("Inventory System Component"));
 }
 
 UAbilitySystemComponent* ARPG_PlayerState::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+UInventorySystemComponent* ARPG_PlayerState::GetInventorySystemComponent() const
+{
+	return InventorySystemComponent;
 }
