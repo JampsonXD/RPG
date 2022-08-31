@@ -9,6 +9,14 @@
 #include "Kismet/GameplayStatics.h"
 
 
+const TMap<EAttachmentRule, EAttachLocation::Type> UFXManager::AttachmentMap =
+{
+	{EAttachmentRule::SnapToTarget, EAttachLocation::Type::SnapToTarget},
+	{EAttachmentRule::KeepRelative, EAttachLocation::Type::KeepRelativeOffset},
+	{EAttachmentRule::KeepWorld, EAttachLocation::Type::KeepWorldPosition}
+};
+
+
 template <typename T>
 T* UFXManager::GetAssetLoaded(TSoftObjectPtr<T> SoftObjectPtr)
 {
@@ -176,7 +184,7 @@ UFXSystemComponent* UFXManager::SpawnVFXDataAtLocation(const FVFXData VFXData, c
 	return nullptr;
 }
 
-UAudioComponent* UFXManager::SpawnSFXDataAtLocation(const FSFXData SFXData, const AActor* SourceActor, const FTransform& Transform)
+UAudioComponent* UFXManager::SpawnSFXDataAtLocation(const FSFXData SFXData, const AActor* SourceActor, const FTransform& Transform) const
 {
 	USoundBase* Asset = GetAssetLoaded<USoundBase>(SFXData.Sound);
 
@@ -201,7 +209,7 @@ UAudioComponent* UFXManager::SpawnSFXDataAtLocation(const FSFXData SFXData, cons
 }
 
 UFXSystemComponent* UFXManager::SpawnVFXDataAtComponent(const FVFXData VFXData, const AActor* SourceActor,
-	USceneComponent* AttachComponent)
+	USceneComponent* AttachComponent) const
 {
 	UFXSystemAsset* Asset = GetAssetLoaded<UFXSystemAsset>(VFXData.ParticleSystem);
 	if (!Asset)
@@ -236,7 +244,7 @@ UFXSystemComponent* UFXManager::SpawnVFXDataAtComponent(const FVFXData VFXData, 
 }
 
 UAudioComponent* UFXManager::SpawnSFXDataAtComponent(const FSFXData SFXData, const AActor* SourceActor,
-	USceneComponent* AttachComponent)
+	USceneComponent* AttachComponent) const
 {
 	USoundBase* Asset = GetAssetLoaded<USoundBase>(SFXData.Sound);
 
@@ -311,14 +319,5 @@ FGameplayTagContainer UFXManager::GetActorTags(const AActor* Actor) const
 
 EAttachLocation::Type UFXManager::GetAttachLocationType(const EAttachmentRule& Rule)
 {
-	switch (Rule)
-	{
-		case EAttachmentRule::KeepRelative:
-			return EAttachLocation::KeepRelativeOffset;
-		case EAttachmentRule::KeepWorld:
-			return EAttachLocation::KeepWorldPosition;
-		case EAttachmentRule::SnapToTarget:
-			return EAttachLocation::SnapToTarget;
-		default: return EAttachLocation::KeepRelativeOffset;
-	}
+	return AttachmentMap.FindRef(Rule);
 }

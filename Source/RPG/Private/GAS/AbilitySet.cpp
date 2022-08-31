@@ -9,6 +9,12 @@
 
 void FAbilitySetActiveHandle::Remove()
 {
+
+	if (!AbilitySystemComponent->IsOwnerActorAuthoritative())
+	{
+		return;
+	}
+
 	if(AbilitySystemComponent.IsValid())
 	{
 		RemoveAbilities();
@@ -32,7 +38,7 @@ void FAbilitySetActiveHandle::RemoveAbilities()
 	for(int index = 0; index < AbilityHandles.Num(); index++)
 	{
 		FGameplayAbilitySpecHandle& Handle = AbilityHandles[index];
-		AbilitySystemComponent.Get()->CancelAbilityHandle(Handle);
+		AbilitySystemComponent.Get()->ClearAbility(Handle);
 	}
 }
 
@@ -60,6 +66,11 @@ void FAbilitySetActiveHandle::RemoveAttributeSets()
 FAbilitySetActiveHandle UAbilitySet::AddAbilitySet(UAbilitySystemComponent* AbilitySystemComponent,
                                                    UObject* SourceObject) const
 {
+	if(!AbilitySystemComponent->IsOwnerActorAuthoritative())
+	{
+		return FAbilitySetActiveHandle();
+	}
+
 	if(!AbilitySystemComponent)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Ability System Component passed into object %s is invalid!"), *GetNameSafe(this));

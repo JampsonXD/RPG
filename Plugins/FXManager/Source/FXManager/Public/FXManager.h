@@ -29,6 +29,9 @@ class FXMANAGER_API UFXManager : public UObject
 
 	FTimerHandle InstantPackTimerHandle;
 
+	/* Maps attachment rules to attach location types */
+	static const TMap<EAttachmentRule, EAttachLocation::Type> AttachmentMap;
+
 public:
 
 	FActiveEffectPackHandle PlayEffectAtLocation(AActor* SourceActor, AActor* TargetActor, FEffectPack& EffectPack, EEffectActivationType ActivationType = EEffectActivationType::Instant, FTransform Transform = FTransform::Identity);
@@ -40,11 +43,11 @@ private:
 
 	UFXSystemComponent* SpawnVFXDataAtLocation(const FVFXData VFXData, const AActor* SourceActor, const FTransform& Transform) const;
 
-	UAudioComponent* SpawnSFXDataAtLocation(const FSFXData SFXData, const AActor* SourceActor, const FTransform& Transform);
+	UAudioComponent* SpawnSFXDataAtLocation(const FSFXData SFXData, const AActor* SourceActor, const FTransform& Transform) const;
 
-	UFXSystemComponent* SpawnVFXDataAtComponent(const FVFXData VFXData, const AActor* SourceActor, USceneComponent* AttachComponent);
+	UFXSystemComponent* SpawnVFXDataAtComponent(const FVFXData VFXData, const AActor* SourceActor, USceneComponent* AttachComponent) const;
 
-	UAudioComponent* SpawnSFXDataAtComponent(const FSFXData SFXData, const AActor* SourceActor, USceneComponent* AttachComponent);
+	UAudioComponent* SpawnSFXDataAtComponent(const FSFXData SFXData, const AActor* SourceActor, USceneComponent* AttachComponent) const;
 
 	FActiveEffectPack& GetActivePack(const FActiveEffectPackHandle& Handle);
 
