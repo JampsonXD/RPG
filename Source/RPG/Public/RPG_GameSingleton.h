@@ -36,11 +36,13 @@ public:
 	/**
 	 * @return Returns the instance of our Game Singleton as an URPG_GameSingleton if valid
 	 **/
+	UFUNCTION(BlueprintCallable, Category = "RPG Singleton")
 	static URPG_GameSingleton* GetSingleton();
 
 	/**
 	 * @return Returns our local instance of the Effect Manager
 	 */
+	UFUNCTION(BlueprintCallable, Category = "RPG Singleton")
 	UFXManager* GetFXManager();
 
 	/**

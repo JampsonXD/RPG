@@ -30,6 +30,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int CurrentClipSize;
 
+	/* Pointer to our Ammo Type */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UItem* AmmoData;
+
 	/* Pointer to the data asset that represents our gun */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	URPG_SuperGun* GunData;
@@ -42,7 +46,7 @@ protected:
 
 protected:
 
-	virtual void SetupItem_Implementation(UItem* ItemDataAsset) override;
+	virtual void SetupItem_Implementation(FItemSetupData ItemSetupData) override;
 
 	virtual void EquipItem_Implementation(ARPG_Character* EquippingCharacter, URPG_AbilitySystemComponent* RPGAbilitySystemComponent) override;
 

@@ -29,7 +29,7 @@ T* UFXManager::GetAssetLoaded(TSoftObjectPtr<T> SoftObjectPtr)
 }
 
 FActiveEffectPackHandle UFXManager::PlayEffectAtLocation(AActor* SourceActor, AActor* TargetActor,
-	FEffectPack& EffectPack, EEffectActivationType ActivationType, FTransform Transform)
+	const FEffectPack& EffectPack, EEffectActivationType ActivationType, FTransform Transform)
 {
 	if(!EffectPack.IsValid())
 	{
@@ -48,7 +48,7 @@ FActiveEffectPackHandle UFXManager::PlayEffectAtLocation(AActor* SourceActor, AA
 	const FGameplayTagContainer SourceTags = GetActorTags(SourceActor);
 	const FGameplayTagContainer TargetTags = GetActorTags(TargetActor);
 
-	for(FVFXData& VfxData : EffectPack.VFXData)
+	for(const FVFXData& VfxData : EffectPack.VFXData)
 	{
 		/* Go to the next effect data if this one is unable to play */
 		if(!VfxData.CanPlay(SourceTags, TargetTags))
@@ -59,7 +59,7 @@ FActiveEffectPackHandle UFXManager::PlayEffectAtLocation(AActor* SourceActor, AA
 		ActivePack.AddActiveVFX(SpawnVFXDataAtLocation(VfxData, SourceActor, Transform));
 	}
 
-	for(FSFXData& SfxData : EffectPack.SFXData)
+	for(const FSFXData& SfxData : EffectPack.SFXData)
 	{
 		/* Go to the next effect data if this one is unable to play */
 		if (!SfxData.CanPlay(SourceTags, TargetTags))
@@ -86,7 +86,7 @@ FActiveEffectPackHandle UFXManager::PlayEffectAtLocation(AActor* SourceActor, AA
 }
 
 FActiveEffectPackHandle UFXManager::PlayEffectAttached(AActor* SourceActor, AActor* TargetActor,
-	USceneComponent* AttachComponent, FEffectPack& EffectPack, EEffectActivationType ActivationType)
+	USceneComponent* AttachComponent, const FEffectPack& EffectPack, EEffectActivationType ActivationType)
 {
 	if (!EffectPack.IsValid())
 	{
@@ -105,7 +105,7 @@ FActiveEffectPackHandle UFXManager::PlayEffectAttached(AActor* SourceActor, AAct
 	const FGameplayTagContainer SourceTags = GetActorTags(SourceActor);
 	const FGameplayTagContainer TargetTags = GetActorTags(TargetActor);
 
-	for (FVFXData& VfxData : EffectPack.VFXData)
+	for (const FVFXData& VfxData : EffectPack.VFXData)
 	{
 		/* Go to the next effect data if this one is unable to play */
 		if (!VfxData.CanPlay(SourceTags, TargetTags))
@@ -116,7 +116,7 @@ FActiveEffectPackHandle UFXManager::PlayEffectAttached(AActor* SourceActor, AAct
 		ActivePack.AddActiveVFX(SpawnVFXDataAtComponent(VfxData, SourceActor, AttachComponent));
 	}
 
-	for (FSFXData& SfxData : EffectPack.SFXData)
+	for (const FSFXData& SfxData : EffectPack.SFXData)
 	{
 		/* Go to the next effect data if this one is unable to play */
 		if (!SfxData.CanPlay(SourceTags, TargetTags))
@@ -272,7 +272,7 @@ FActiveEffectPack& UFXManager::GetActivePack(const FActiveEffectPackHandle& Hand
 {
 	/* Get our active or instant pack array based on the activation data from our handle */
 	TArray<FActiveEffectPack>& Array = Handle.GetPackType() == EEffectActivationType::Active ? ActiveEffectPacks : InstantEffectPacks;
-	for (auto Iterator = ActiveEffectPacks.CreateConstIterator(); Iterator; ++Iterator)
+	for (auto Iterator = Array.CreateConstIterator(); Iterator; ++Iterator)
 	{
 		FActiveEffectPack& Pack = Array[Iterator.GetIndex()];
 		if (Pack.Id == Handle.GetId())

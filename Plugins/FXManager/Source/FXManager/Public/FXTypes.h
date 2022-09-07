@@ -171,6 +171,7 @@ USTRUCT(BlueprintType)
 struct FEffectPack
 {
 	GENERATED_BODY()
+	virtual ~FEffectPack() = default;
 
 	FEffectPack()
 	{
@@ -183,11 +184,11 @@ struct FEffectPack
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<FSFXData> SFXData;
 
-	bool HasSFX() const { return SFXData.Num() > 0; }
-	bool HasVFX() const { return VFXData.Num() > 0; }
+	virtual bool HasSFX() const { return SFXData.Num() > 0; }
+	virtual bool HasVFX() const { return VFXData.Num() > 0; }
 
 	/* Effect pack is valid if we have any Sound Effects or Visual Effects*/
-	bool IsValid() const { return HasSFX() || HasVFX(); }
+	virtual bool IsValid() const { return HasSFX() || HasVFX(); }
 
 };
 

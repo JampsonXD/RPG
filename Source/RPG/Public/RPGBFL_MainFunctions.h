@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FXManager.h"
 #include "FXTypes.h"
 #include "GameplayTag/RPG_TagLibrary.h"
 #include "GAS/GAS_Types.h"
@@ -38,6 +39,9 @@ class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 	static bool GetFirstActorOfClassOrFirstActor(TArray<AActor*> ActorArray, TSubclassOf<AActor> ActorFilter, AActor*& FoundActor);
 
 	UFUNCTION(BlueprintCallable, Category = "RPG Effects")
+	static UFXManager* GetRPGFXManager();
+
+	UFUNCTION(BlueprintCallable, Category = "RPG Effects")
 	static FActiveEffectPackHandle PlayEffectPackAtLocation(FEffectPack EffectPack, AActor* SourceActor,
 	AActor* TargetActor = nullptr, EEffectActivationType ActivationType = EEffectActivationType::Instant, FTransform Transform = FTransform());
 
@@ -47,6 +51,9 @@ class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, Category = "RPG Effects")
 	static void StopActiveEffectPackWithHandle(UPARAM(ref) FActiveEffectPackHandle& Handle);
+
+	UFUNCTION(BlueprintCallable, Category = "RPG Effects")
+	static void AddForceFeedbackOnController(AController* Controller, UForceFeedbackEffect* ForceFeedbackEffect, bool bIsLooping = false);
 
 	UFUNCTION(BlueprintCallable, Category = "RPG GAS")
 	static void AddLooseGameplayTagsToActor(AActor* TargetActor, const FGameplayTagContainer Tags);

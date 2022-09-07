@@ -21,6 +21,16 @@ int URPGBFL_MainFunctions::AppendUnique(const TArray<UProperty*>& TargetArray, U
 	return UniqueCount;
 }
 
+UFXManager* URPGBFL_MainFunctions::GetRPGFXManager()
+{
+	if(URPG_GameSingleton* Singleton = URPG_GameSingleton::GetSingleton())
+	{
+		return Singleton->GetFXManager();
+	}
+
+	return nullptr;
+}
+
 bool URPGBFL_MainFunctions::GetFirstActorOfClassOrFirstActor(TArray<AActor*> ActorArray,
                                                              TSubclassOf<AActor> ActorFilter, AActor*& FoundActor)
 {
@@ -61,6 +71,23 @@ FActiveEffectPackHandle URPGBFL_MainFunctions::PlayEffectPackAttached(FEffectPac
 void URPGBFL_MainFunctions::StopActiveEffectPackWithHandle(FActiveEffectPackHandle& Handle)
 {
 	URPG_GameSingleton::GetSingleton()->GetFXManager()->StopActivePack(Handle);
+}
+
+void URPGBFL_MainFunctions::AddForceFeedbackOnController(AController* Controller,
+	UForceFeedbackEffect* ForceFeedbackEffect, bool bIsLooping)
+{
+	if(!ForceFeedbackEffect)
+	{
+		return;
+	}
+
+	APlayerController* PlayerController = Cast<APlayerController>(Controller);
+	if(PlayerController)
+	{
+		FForceFeedbackParameters Params;
+		Params.bLooping = bIsLooping;
+		PlayerController->ClientPlayForceFeedback(ForceFeedbackEffect, Params);
+	}
 }
 
 void URPGBFL_MainFunctions::AddLooseGameplayTagsToActor(AActor* TargetActor, const FGameplayTagContainer Tags)

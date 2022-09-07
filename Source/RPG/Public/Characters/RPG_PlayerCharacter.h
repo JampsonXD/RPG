@@ -20,10 +20,16 @@ class RPG_API ARPG_PlayerCharacter : public ARPG_Character, public IInteractionS
 	GENERATED_BODY()
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FollowCamera;
+	class UCameraComponent* FirstPersonCamera;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* SpringArm;
+	class USpringArmComponent* FirstPersonSpringArm;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* ThirdPersonCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* ThirdPersonSpringArm;
 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
@@ -80,9 +86,60 @@ public:
 	virtual UInteractionSystemComponent* GetInteractionSystemComponent() const override;
 
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE UCameraComponent* GetCameraComponent() const { return FollowCamera; }
+	FORCEINLINE UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCamera; }
 
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE USpringArmComponent* GetSpringArmComponent() const { return SpringArm; }
+	FORCEINLINE USpringArmComponent* GetFirstPersonSpringArmComponent() const { return FirstPersonSpringArm; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE UCameraComponent* GetThirdPersonCameraComponent() const { return ThirdPersonCamera; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE USpringArmComponent* GetThirdPersonSpringArmComponent() const { return ThirdPersonSpringArm; }
+
+
+
+/*********************************************/
+			/* Weapon System */
+/*********************************************/
+
+protected:
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input Actions")
+	UInputAction* NextWeaponAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input Actions")
+	UInputAction* PreviousWeaponAction;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Weapon System")
+	TArray<AActor*> WeaponActors;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Weapon System")
+	int CurrentWeaponEquipSlot;
+
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon System")
+	void EquipWeaponAtSlot(int EquipSlot);
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon System")
+	void EquipNextWeapon();
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon System")
+	void EquipPreviousWeapon();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Weapon System")
+	bool HasWeaponEquipped() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Weapon System")
+	bool IsValidWeaponSlot(const int NewWeaponSlot) const;
+
+	UFUNCTION(BlueprintCallable)
+	void UnequipCurrentWeapon();
+
+protected:
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Weapon System")
+	bool IsValidNewWeaponEquipSlot(const int EquipSlot) const;
 	
 };

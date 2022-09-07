@@ -47,7 +47,7 @@ void UEC_SuperDamage::Execute_Implementation(const FGameplayEffectCustomExecutio
 
 	// If our Damage Mitigation Mod Calc is valid, grab its CDO and get our modified damage value
 	float PostMitigationDamage = Damage;
-	if(DamageTypeData.DamageMitigationMod.Get())
+	if(DamageTypeData.DamageMitigationMod)
 	{
 		URPG_DamageMitigationCalculations* CDODamageCalc = DamageTypeData.DamageMitigationMod.GetDefaultObject();
 		PostMitigationDamage = CDODamageCalc->GetModifiedValue(Damage, ExecutionParams, EvaluateParameters, DamageStatics());

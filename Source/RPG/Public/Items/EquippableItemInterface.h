@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "RPG_ItemTypes.h"
 #include "UObject/Interface.h"
 #include "EquippableItemInterface.generated.h"
 
@@ -27,7 +28,7 @@ class RPG_API IEquippableItemInterface
 public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void SetupItem(UItem* ItemDataAsset);
+	void SetupItem(FItemSetupData SetupData);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void EquipItem(ARPG_Character* EquippingCharacter, URPG_AbilitySystemComponent* RPGAbilitySystemComponent);

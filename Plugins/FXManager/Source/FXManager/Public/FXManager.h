@@ -34,9 +34,17 @@ class FXMANAGER_API UFXManager : public UObject
 
 public:
 
-	FActiveEffectPackHandle PlayEffectAtLocation(AActor* SourceActor, AActor* TargetActor, FEffectPack& EffectPack, EEffectActivationType ActivationType = EEffectActivationType::Instant, FTransform Transform = FTransform::Identity);
-	FActiveEffectPackHandle PlayEffectAttached(AActor* SourceActor, AActor* TargetActor, USceneComponent* AttachComponent, FEffectPack& EffectPack, EEffectActivationType ActivationType = EEffectActivationType::Instant);
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "FX Manager")
+	FActiveEffectPackHandle PlayEffectAtLocation(AActor* SourceActor, AActor* TargetActor,
+		const FEffectPack& EffectPack, EEffectActivationType ActivationType = EEffectActivationType::Instant,
+		FTransform Transform = FTransform());
 
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "FX Manager")
+	FActiveEffectPackHandle PlayEffectAttached(AActor* SourceActor, AActor* TargetActor,
+		USceneComponent* AttachComponent, const FEffectPack& EffectPack,
+		EEffectActivationType ActivationType = EEffectActivationType::Instant);
+
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "FX Manager")
 	void StopActivePack(const FActiveEffectPackHandle& Handle);
 
 private:

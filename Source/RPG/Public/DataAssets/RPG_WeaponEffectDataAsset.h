@@ -23,6 +23,9 @@ public:
 	FEffectPack OnFireEffects;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UForceFeedbackEffect* OnFireForce;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FEffectPack MuzzleEffects;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)

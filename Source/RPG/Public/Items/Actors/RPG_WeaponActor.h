@@ -42,7 +42,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void SetupItem_Implementation(UItem* ItemDataAsset) override;
+	virtual void SetupItem_Implementation(FItemSetupData ItemSetupData) override;
 
 	virtual void EquipItem_Implementation(ARPG_Character* EquippingCharacter, URPG_AbilitySystemComponent* RPGAbilitySystemComponent) override;
 

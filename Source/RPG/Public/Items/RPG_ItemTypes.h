@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Item.h"
 #include "UObject/NoExportTypes.h"
 #include "RPG_ItemTypes.generated.h"
 
@@ -28,4 +29,20 @@ struct FEquipData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTransform RelativeTransform;
 	
+};
+
+USTRUCT(BlueprintType)
+struct FItemSetupData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UItem* DataAsset;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UInventorySystemComponent* OwningInventorySystemComponent;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	AActor* OwningActor;
+
 };

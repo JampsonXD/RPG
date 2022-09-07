@@ -15,12 +15,11 @@ ARPG_GunActor::ARPG_GunActor() : Super()
 	MaximumClipSize = 0;
 }
 
-void ARPG_GunActor::SetupItem_Implementation(UItem* ItemDataAsset)
+void ARPG_GunActor::SetupItem_Implementation(FItemSetupData ItemSetupData)
 {
-	Super::SetupItem_Implementation(ItemDataAsset);
+	Super::SetupItem_Implementation(ItemSetupData);
 
-	ensure(ItemDataAsset);
-	GunData = CastChecked<URPG_SuperGun>(ItemDataAsset);
+	GunData = CastChecked<URPG_SuperGun>(ItemSetupData.DataAsset);
 	EffectsData = GunData->WeaponEffects;
 	MaximumClipSize = GunData->ClipSize;
 	CurrentClipSize = MaximumClipSize;
@@ -63,21 +62,49 @@ bool ARPG_GunActor::CanFire_Implementation()
 
 bool ARPG_GunActor::CanReload_Implementation()
 {
-	return false;
+	UInventorySystemComponent* ISC = GetOwningInventorySystemComponent();
+	uint8 AvailableAmmo = 0;
+
+	if (ISC)
+	{
+		AvailableAmmo = FMath::Min<uint8>(ISC->GetItemStackCount(AmmoData), MaximumClipSize);
+	}
+
+	return AvailableAmmo > 0;
 }
 
 void ARPG_GunActor::Reload_Implementation()
 {
+	UInventorySystemComponent* ISC = GetOwningInventorySystemComponent();
+	uint8 AvailableAmmo = 0;
 
+	if (ISC)
+	{
+		AvailableAmmo = FMath::Min<uint8>(ISC->GetItemStackCount(AmmoData), MaximumClipSize - CurrentClipSize);
+	}
+
+	if (AvailableAmmo == 0)
+	{
+		return;
+	}
+
+	ISC->RemoveItem(AmmoData, AvailableAmmo);
+	CurrentClipSize += AvailableAmmo;
 }
 
 void ARPG_GunActor::FireWeapon_Implementation()
 {
+	CurrentClipSize--;
+
 	if(!EffectsData)
 	{
 		return;
 	}
 
-	URPGBFL_MainFunctions::PlayEffectPackAttached(EffectsData->MuzzleEffects, this, nullptr,
+	// Play Muzzle Effects
+	URPGBFL_MainFunctions::PlayEffectPackAttached(EffectsData->MuzzleEffects, GetOwningActor(), nullptr,
 		EEffectActivationType::Instant, GetWeaponMesh());
+
+	// Add controller shake
+	URPGBFL_MainFunctions::AddForceFeedbackOnController(GetOwningActor()->GetInstigatorController(), EffectsData->OnFireForce, false);
 }

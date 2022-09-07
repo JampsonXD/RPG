@@ -29,10 +29,12 @@ void ARPG_WeaponActor::Tick(float DeltaTime)
 
 }
 
-void ARPG_WeaponActor::SetupItem_Implementation(UItem* ItemDataAsset)
+void ARPG_WeaponActor::SetupItem_Implementation(FItemSetupData ItemSetupData)
 {
-	ensure(ItemDataAsset);
-	const URPG_SuperWeapon* WeaponData = CastChecked<URPG_SuperWeapon>(ItemDataAsset);
+	const URPG_SuperWeapon* WeaponData = CastChecked<URPG_SuperWeapon>(ItemSetupData.DataAsset);
+	OwningActor = ItemSetupData.OwningActor;
+	InventorySystemComponent = ItemSetupData.OwningInventorySystemComponent;
+
 	WeaponMesh->SetSkeletalMesh(WeaponData->Mesh);
 	AbilitySet = WeaponData->ItemAbilitySet;
 }
