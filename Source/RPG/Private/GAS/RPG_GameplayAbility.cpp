@@ -15,6 +15,32 @@ EAbilityInput URPG_GameplayAbility::GetInputID() const
 	return InputID;
 }
 
+bool URPG_GameplayAbility::CheckCost(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	return Super::CheckCost(Handle, ActorInfo, OptionalRelevantTags) && RPGCheckCost(Handle, *ActorInfo);
+}
+
+void URPG_GameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	RPGApplyCost(Handle, *ActorInfo, ActivationInfo);
+	Super::ApplyCost(Handle, ActorInfo, ActivationInfo);
+}
+
+bool URPG_GameplayAbility::RPGCheckCost_Implementation(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo ActorInfo) const
+{
+	return true;
+}
+
+void URPG_GameplayAbility::RPGApplyCost_Implementation(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
+{
+
+}
+
+
 FGameplayEffectContainerSpec URPG_GameplayAbility::MakeEffectContainerSpecFromContainer(
 	const FGameplayEffectContainer& Container, const FGameplayEventData& EventData, int AbilityLevel)
 {

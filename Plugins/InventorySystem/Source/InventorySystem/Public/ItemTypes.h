@@ -13,17 +13,28 @@ class UItem;
  * 
  */
 
-/* Additional information an item data contains that can modify state
- * This is useful for things such as reserve ammo found in a weapon or the durability
- * of a weapon. Empty by default but should be sub-classed and passed down for
- * different items based on the needs.
- */
-
-UCLASS()
-class UItemBonusData : public UObject
+USTRUCT(BlueprintType)
+struct FItemStateData
 {
 	GENERATED_BODY()
-	
+
+	FItemStateData()
+	{
+		Magnitude = 0.f;
+		OptionalObject = nullptr;
+	}
+
+	bool operator==(FItemStateData& Other) const { return this->Magnitude == Other.Magnitude && this->OptionalObject == Other.OptionalObject; }
+	bool operator!=(FItemStateData& Other) const { return !(*this == Other); }
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float Magnitude;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UObject* OptionalObject;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FVector LocationData;
 };
 
 USTRUCT(BlueprintType)
@@ -96,10 +107,10 @@ struct FInventorySlotData
 	FInventorySlotData()
 	{
 		StackCount = -1;
-		ItemData = nullptr;
+		ItemData = FItemStateData();
 	}
 
-	FInventorySlotData(int InStackCount, UItemBonusData* InItemData = nullptr)
+	FInventorySlotData(int InStackCount, FItemStateData InItemData = FItemStateData())
 	{
 		StackCount = InStackCount;
 		ItemData = InItemData;
@@ -109,7 +120,7 @@ struct FInventorySlotData
 	int StackCount;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UItemBonusData* ItemData;
+	FItemStateData ItemData;
 
 	bool IsValid() const { return StackCount > 0;  }
 	bool operator==(FInventorySlotData& Other) const { return this->StackCount == Other.StackCount && this->ItemData == Other.ItemData; }

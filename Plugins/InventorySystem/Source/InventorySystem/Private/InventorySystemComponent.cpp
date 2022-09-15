@@ -88,6 +88,28 @@ bool UInventorySystemComponent::RemoveItem(UItem* Item, int StackCount)
 	return true;
 }
 
+bool UInventorySystemComponent::SetItemStateData(UItem* Item, FItemStateData ItemStateData)
+{
+	FInventorySlotData Slot;
+	GetInventorySlotForItem(Item, Slot);
+
+	if(Slot.IsValid())
+	{
+		Slot.ItemData = ItemStateData;
+		InventoryMap.Add(Item, Slot);
+		return true;
+	}
+
+	return false;
+}
+
+FItemStateData UInventorySystemComponent::GetItemStateData(UItem* Item)
+{
+	FInventorySlotData Slot;
+	GetInventorySlotForItem(Item, Slot);
+	return Slot.ItemData;
+}
+
 bool UInventorySystemComponent::GetInventoryItems(FPrimaryAssetType ItemType, TArray<UItem*>& OutItems)
 {
 	if(!ItemType.IsValid())

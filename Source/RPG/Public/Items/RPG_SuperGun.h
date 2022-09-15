@@ -26,6 +26,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RPG Gun")
 	EGunFireMode FireMode;
 
+	/* Pointer to the type of object we will consume to use the weapon */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RPG Gun")
+	UItem* AmmoItem;
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "RPG Gun | Effects")
 	URPG_WeaponEffectDataAsset* WeaponEffects;
 

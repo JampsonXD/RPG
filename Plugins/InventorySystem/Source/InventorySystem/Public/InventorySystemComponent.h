@@ -64,6 +64,12 @@ public:
 	bool RemoveItem(UItem* Item, int StackCount = 1);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Items")
+	bool SetItemStateData(UItem* Item, FItemStateData ItemStateData);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Inventory System Component | Items")
+	FItemStateData GetItemStateData(UItem* Item);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Items")
 	bool GetInventoryItems(FPrimaryAssetType ItemType, TArray<UItem*>& OutItems);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System Component | Items")

@@ -21,23 +21,13 @@ int URPGBFL_MainFunctions::AppendUnique(const TArray<UProperty*>& TargetArray, U
 	return UniqueCount;
 }
 
-UFXManager* URPGBFL_MainFunctions::GetRPGFXManager()
-{
-	if(URPG_GameSingleton* Singleton = URPG_GameSingleton::GetSingleton())
-	{
-		return Singleton->GetFXManager();
-	}
-
-	return nullptr;
-}
-
 bool URPGBFL_MainFunctions::GetFirstActorOfClassOrFirstActor(TArray<AActor*> ActorArray,
                                                              TSubclassOf<AActor> ActorFilter, AActor*& FoundActor)
 {
 	FoundActor = nullptr;
 
 	// Validate we dont have an empty array
-	if(ActorArray.Num() < 1)
+	if(ActorArray.IsEmpty())
 	{
 		return false;
 	}
@@ -59,18 +49,22 @@ bool URPGBFL_MainFunctions::GetFirstActorOfClassOrFirstActor(TArray<AActor*> Act
 FActiveEffectPackHandle URPGBFL_MainFunctions::PlayEffectPackAtLocation(FEffectPack EffectPack, AActor* SourceActor,
 	AActor* TargetActor, EEffectActivationType ActivationType, FTransform Transform)
 {
-	return URPG_GameSingleton::GetSingleton()->GetFXManager()->PlayEffectAtLocation(SourceActor, TargetActor, EffectPack, ActivationType, Transform);
+	if(UFXManagerSubsystem* Manager = UFXManagerSubsystem::GetFXManager()) return Manager->PlayEffectAtLocation(SourceActor, TargetActor, EffectPack, ActivationType, Transform);
+
+	return FActiveEffectPackHandle();
 }
 
 FActiveEffectPackHandle URPGBFL_MainFunctions::PlayEffectPackAttached(FEffectPack EffectPack, AActor* SourceActor,
 	AActor* TargetActor, EEffectActivationType ActivationType, USceneComponent* AttachComponent)
 {
-	return URPG_GameSingleton::GetSingleton()->GetFXManager()->PlayEffectAttached(SourceActor, TargetActor, AttachComponent, EffectPack, ActivationType);
+	if (UFXManagerSubsystem* Manager = UFXManagerSubsystem::GetFXManager()) return Manager->PlayEffectAttached(SourceActor, TargetActor, AttachComponent, EffectPack, ActivationType);
+
+	return FActiveEffectPackHandle();
 }
 
 void URPGBFL_MainFunctions::StopActiveEffectPackWithHandle(FActiveEffectPackHandle& Handle)
 {
-	URPG_GameSingleton::GetSingleton()->GetFXManager()->StopActivePack(Handle);
+	if (UFXManagerSubsystem* Manager = UFXManagerSubsystem::GetFXManager()) Manager->StopActivePack(Handle);
 }
 
 void URPGBFL_MainFunctions::AddForceFeedbackOnController(AController* Controller,

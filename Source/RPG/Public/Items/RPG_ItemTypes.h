@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Item.h"
+#include "ItemTypes.h"
 #include "UObject/NoExportTypes.h"
 #include "RPG_ItemTypes.generated.h"
 
@@ -44,5 +45,8 @@ struct FItemSetupData
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	AActor* OwningActor;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FItemStateData ItemStateData;
 
 };

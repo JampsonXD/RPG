@@ -5,16 +5,29 @@
 #include "CoreMinimal.h"
 #include "FXTypes.h"
 #include "UObject/NoExportTypes.h"
-#include "FXManager.generated.h"
+#include "FXManagerSubsystem.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class FXMANAGER_API UFXManager : public UObject
+class FXMANAGER_API UFXManagerSubsystem : public UEngineSubsystem
 {
 	GENERATED_BODY()
-		
+
+
+	// Begin Subsystem Overrides
+public:
+
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+	virtual void Deinitialize() override;
+
+	// End Subsystem Overrides
+
+private:
 	template <typename T>
 	static T* GetAssetLoaded(TSoftObjectPtr<T> SoftObjectPtr);
 
@@ -33,6 +46,9 @@ class FXMANAGER_API UFXManager : public UObject
 	static const TMap<EAttachmentRule, EAttachLocation::Type> AttachmentMap;
 
 public:
+
+	/* Returns a pointer to our instanced FX manager subsystem, nullptr if the global engine pointer is invalid */
+	static UFXManagerSubsystem* GetFXManager();
 
 	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "FX Manager")
 	FActiveEffectPackHandle PlayEffectAtLocation(AActor* SourceActor, AActor* TargetActor,

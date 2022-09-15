@@ -8,6 +8,10 @@
 
 class URPG_SuperGun;
 class URPG_WeaponEffectDataAsset;
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCurrentClipSizeChanged, int, OldValue, int, NewValue);
+
 /**
  * 
  */
@@ -19,6 +23,10 @@ class RPG_API ARPG_GunActor : public ARPG_WeaponActor
 public:
 
 	ARPG_GunActor();
+
+	/* Multicast delegate invoked when our current ammo changes */
+	UPROPERTY(BlueprintAssignable)
+	FOnCurrentClipSizeChanged OnCurrentClipSizeChanged;
 
 protected:
 
@@ -64,5 +72,11 @@ public:
 	void Reload();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "RPG Gun")
-	void FireWeapon();
+	void FireWeaponEffects();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	int GetCurrentAmmo() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentAmmo(int NewAmmoAmount);
 };

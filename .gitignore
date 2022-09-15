@@ -74,6 +74,7 @@ Plugins/*/Intermediate/*
 DerivedDataCache/*
 
 # Asset files we dont need to store
+Content/StarterContent/*
 Content/Assets/*
 Content/ParagonYin/*
 Content/KiteDemo/*

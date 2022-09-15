@@ -29,6 +29,16 @@ public:
 	enum EAbilityInput GetInputID() const;
 
 protected:
+
+	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const override;
+
+	virtual void ApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Ability)
+	bool RPGCheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo ActorInfo) const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Ability)
+	void RPGApplyCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Gameplay Effect Container")
 	FGameplayEffectContainerSpec MakeEffectContainerSpecFromContainer(const FGameplayEffectContainer& Container, const FGameplayEventData& EventData, int AbilityLevel = -1);

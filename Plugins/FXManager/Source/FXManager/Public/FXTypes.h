@@ -110,7 +110,28 @@ struct FTagRequirements
 };
 
 USTRUCT(BlueprintType)
-struct FVFXData
+struct FFXData
+{
+	GENERATED_BODY()
+
+	virtual ~FFXData() = default;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FAttachData AttachmentData;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FTagRequirements TagRequirements;
+
+	virtual FTransform GetRelativeTransform() const { return AttachmentData.RelativeTransform; }
+
+	virtual bool CanPlay(const FGameplayTagContainer& SourceTags, const FGameplayTagContainer& TargetTags) const
+	{
+		return TagRequirements.MeetsSourceAndTargetCriteria(SourceTags, TargetTags);
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FVFXData : public FFXData
 {
 	GENERATED_BODY()
 
@@ -122,22 +143,10 @@ struct FVFXData
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TSoftObjectPtr<UFXSystemAsset> ParticleSystem;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FAttachData AttachmentData;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FTagRequirements TagRequirements;
-
-	bool CanPlay(const FGameplayTagContainer& SourceTags, const FGameplayTagContainer& TargetTags) const
-	{
-		return TagRequirements.MeetsSourceAndTargetCriteria(SourceTags, TargetTags);
-	}
-
-	FTransform GetRelativeTransform() const { return AttachmentData.RelativeTransform; }
 };
 
 USTRUCT(BlueprintType)
-struct FSFXData
+struct FSFXData : public FFXData
 {
 	GENERATED_BODY()
 
@@ -150,21 +159,8 @@ struct FSFXData
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TSoftObjectPtr<USoundBase> Sound;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta =(EditCondition = "AudioType == EAudioType::ThreeDimensional", EditConditionHides))
-	FAttachData AttachmentData;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FTagRequirements TagRequirements;
-
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TEnumAsByte<EAudioType> AudioType;
-
-	bool CanPlay(const FGameplayTagContainer& SourceTags, const FGameplayTagContainer& TargetTags) const
-	{
-		return TagRequirements.MeetsSourceAndTargetCriteria(SourceTags, TargetTags);
-	}
-
-	FTransform GetRelativeTransform() const { return AttachmentData.RelativeTransform; }
 };
 
 USTRUCT(BlueprintType)

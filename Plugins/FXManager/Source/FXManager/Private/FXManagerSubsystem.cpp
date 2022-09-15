@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "FXManager.h"
+#include "FXManagerSubsystem.h"
 #include "GameplayTagAssetInterface.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
@@ -9,7 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 
 
-const TMap<EAttachmentRule, EAttachLocation::Type> UFXManager::AttachmentMap =
+const TMap<EAttachmentRule, EAttachLocation::Type> UFXManagerSubsystem::AttachmentMap =
 {
 	{EAttachmentRule::SnapToTarget, EAttachLocation::Type::SnapToTarget},
 	{EAttachmentRule::KeepRelative, EAttachLocation::Type::KeepRelativeOffset},
@@ -18,7 +18,7 @@ const TMap<EAttachmentRule, EAttachLocation::Type> UFXManager::AttachmentMap =
 
 
 template <typename T>
-T* UFXManager::GetAssetLoaded(TSoftObjectPtr<T> SoftObjectPtr)
+T* UFXManagerSubsystem::GetAssetLoaded(TSoftObjectPtr<T> SoftObjectPtr)
 {
 	if(SoftObjectPtr.IsValid())
 	{
@@ -28,8 +28,33 @@ T* UFXManager::GetAssetLoaded(TSoftObjectPtr<T> SoftObjectPtr)
 	return SoftObjectPtr.LoadSynchronous();
 }
 
-FActiveEffectPackHandle UFXManager::PlayEffectAtLocation(AActor* SourceActor, AActor* TargetActor,
-	const FEffectPack& EffectPack, EEffectActivationType ActivationType, FTransform Transform)
+bool UFXManagerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	return true;
+}
+
+void UFXManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+
+}
+
+void UFXManagerSubsystem::Deinitialize()
+{
+
+}
+
+UFXManagerSubsystem* UFXManagerSubsystem::GetFXManager()
+{
+	if(GEngine)
+	{
+		return GEngine->GetEngineSubsystem<UFXManagerSubsystem>();
+	}
+
+	return nullptr;
+}
+
+FActiveEffectPackHandle UFXManagerSubsystem::PlayEffectAtLocation(AActor* SourceActor, AActor* TargetActor,
+                                                         const FEffectPack& EffectPack, EEffectActivationType ActivationType, FTransform Transform)
 {
 	if(!EffectPack.IsValid())
 	{
@@ -70,22 +95,16 @@ FActiveEffectPackHandle UFXManager::PlayEffectAtLocation(AActor* SourceActor, AA
 		ActivePack.AddActiveSound(SpawnSFXDataAtLocation(SfxData, SourceActor, Transform));
 	}
 
-	if(ActivationType == EEffectActivationType::Active && ActivePack.IsActive())
+	if(!ActivePack.IsActive())
 	{
-		ActiveEffectPacks.Add(ActivePack);
-		return ActivePack.CreateHandle();
+		return FActiveEffectPackHandle();
 	}
 
-	if(ActivePack.IsActive())
-	{
-		AddInstantPack(SourceActor, ActivePack);
-		return ActivePack.CreateHandle();
-	}
-
-	return FActiveEffectPackHandle();
+	ActivationType == EEffectActivationType::Active ? ActiveEffectPacks.Add(ActivePack) : AddInstantPack(SourceActor, ActivePack);
+	return ActivePack.CreateHandle();
 }
 
-FActiveEffectPackHandle UFXManager::PlayEffectAttached(AActor* SourceActor, AActor* TargetActor,
+FActiveEffectPackHandle UFXManagerSubsystem::PlayEffectAttached(AActor* SourceActor, AActor* TargetActor,
 	USceneComponent* AttachComponent, const FEffectPack& EffectPack, EEffectActivationType ActivationType)
 {
 	if (!EffectPack.IsValid())
@@ -127,22 +146,16 @@ FActiveEffectPackHandle UFXManager::PlayEffectAttached(AActor* SourceActor, AAct
 		ActivePack.AddActiveSound(SpawnSFXDataAtComponent(SfxData, SourceActor, AttachComponent));
 	}
 
-	if (ActivationType == EEffectActivationType::Active && ActivePack.IsActive())
+	if (!ActivePack.IsActive())
 	{
-		ActiveEffectPacks.Add(ActivePack);
-		return ActivePack.CreateHandle();
+		return FActiveEffectPackHandle();
 	}
 
-	if (ActivePack.IsActive())
-	{
-		AddInstantPack(SourceActor, ActivePack);
-		return ActivePack.CreateHandle();
-	}
-
-	return FActiveEffectPackHandle();
+	ActivationType == EEffectActivationType::Active ? ActiveEffectPacks.Add(ActivePack) : AddInstantPack(SourceActor, ActivePack);
+	return ActivePack.CreateHandle();
 }
 
-void UFXManager::StopActivePack(const FActiveEffectPackHandle& Handle)
+void UFXManagerSubsystem::StopActivePack(const FActiveEffectPackHandle& Handle)
 {
 	for(auto Iterator = ActiveEffectPacks.CreateIterator(); Iterator; ++Iterator)
 	{
@@ -156,7 +169,7 @@ void UFXManager::StopActivePack(const FActiveEffectPackHandle& Handle)
 	}
 }
 
-UFXSystemComponent* UFXManager::SpawnVFXDataAtLocation(const FVFXData VFXData, const AActor* SourceActor, const FTransform& Transform) const
+UFXSystemComponent* UFXManagerSubsystem::SpawnVFXDataAtLocation(const FVFXData VFXData, const AActor* SourceActor, const FTransform& Transform) const
 {
 
 	UFXSystemAsset* Asset = GetAssetLoaded<UFXSystemAsset>(VFXData.ParticleSystem);
@@ -184,7 +197,7 @@ UFXSystemComponent* UFXManager::SpawnVFXDataAtLocation(const FVFXData VFXData, c
 	return nullptr;
 }
 
-UAudioComponent* UFXManager::SpawnSFXDataAtLocation(const FSFXData SFXData, const AActor* SourceActor, const FTransform& Transform) const
+UAudioComponent* UFXManagerSubsystem::SpawnSFXDataAtLocation(const FSFXData SFXData, const AActor* SourceActor, const FTransform& Transform) const
 {
 	USoundBase* Asset = GetAssetLoaded<USoundBase>(SFXData.Sound);
 
@@ -208,7 +221,7 @@ UAudioComponent* UFXManager::SpawnSFXDataAtLocation(const FSFXData SFXData, cons
 	return nullptr;
 }
 
-UFXSystemComponent* UFXManager::SpawnVFXDataAtComponent(const FVFXData VFXData, const AActor* SourceActor,
+UFXSystemComponent* UFXManagerSubsystem::SpawnVFXDataAtComponent(const FVFXData VFXData, const AActor* SourceActor,
 	USceneComponent* AttachComponent) const
 {
 	UFXSystemAsset* Asset = GetAssetLoaded<UFXSystemAsset>(VFXData.ParticleSystem);
@@ -243,7 +256,7 @@ UFXSystemComponent* UFXManager::SpawnVFXDataAtComponent(const FVFXData VFXData, 
 	return nullptr;
 }
 
-UAudioComponent* UFXManager::SpawnSFXDataAtComponent(const FSFXData SFXData, const AActor* SourceActor,
+UAudioComponent* UFXManagerSubsystem::SpawnSFXDataAtComponent(const FSFXData SFXData, const AActor* SourceActor,
 	USceneComponent* AttachComponent) const
 {
 	USoundBase* Asset = GetAssetLoaded<USoundBase>(SFXData.Sound);
@@ -268,7 +281,7 @@ UAudioComponent* UFXManager::SpawnSFXDataAtComponent(const FSFXData SFXData, con
 }
 
 
-FActiveEffectPack& UFXManager::GetActivePack(const FActiveEffectPackHandle& Handle)
+FActiveEffectPack& UFXManagerSubsystem::GetActivePack(const FActiveEffectPackHandle& Handle)
 {
 	/* Get our active or instant pack array based on the activation data from our handle */
 	TArray<FActiveEffectPack>& Array = Handle.GetPackType() == EEffectActivationType::Active ? ActiveEffectPacks : InstantEffectPacks;
@@ -285,26 +298,26 @@ FActiveEffectPack& UFXManager::GetActivePack(const FActiveEffectPackHandle& Hand
 	return *Pack;
 }
 
-void UFXManager::AddInstantPack(const UObject* WorldContextObject, const FActiveEffectPack& ActivePack)
+void UFXManagerSubsystem::AddInstantPack(const UObject* WorldContextObject, const FActiveEffectPack& ActivePack)
 {
 	InstantEffectPacks.Add(ActivePack);
 	if(!WorldContextObject->GetWorld()->GetTimerManager().IsTimerActive(InstantPackTimerHandle))
 	{
-		InstantPackTimerHandle = WorldContextObject->GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UFXManager::ClearInstantPacks);
+		InstantPackTimerHandle = WorldContextObject->GetWorld()->GetTimerManager().SetTimerForNextTick(this, &UFXManagerSubsystem::ClearInstantPacks);
 	}
 }
 
-void UFXManager::ClearInstantPacks()
+void UFXManagerSubsystem::ClearInstantPacks()
 {
 	InstantEffectPacks.Empty();
 }
 
-int UFXManager::GenerateNewActivePackId()
+int UFXManagerSubsystem::GenerateNewActivePackId()
 {
 	return Internal_NextId++;
 }
 
-FGameplayTagContainer UFXManager::GetActorTags(const AActor* Actor) const
+FGameplayTagContainer UFXManagerSubsystem::GetActorTags(const AActor* Actor) const
 {
 	FGameplayTagContainer Container = FGameplayTagContainer::EmptyContainer;
 
@@ -317,7 +330,7 @@ FGameplayTagContainer UFXManager::GetActorTags(const AActor* Actor) const
 	return Container;
 }
 
-EAttachLocation::Type UFXManager::GetAttachLocationType(const EAttachmentRule& Rule)
+EAttachLocation::Type UFXManagerSubsystem::GetAttachLocationType(const EAttachmentRule& Rule)
 {
 	return AttachmentMap.FindRef(Rule);
 }

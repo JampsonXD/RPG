@@ -62,9 +62,9 @@ FInteractionTracePoints ARPG_PlayerCharacter::GetTracePoints() const
 {
 	FInteractionTracePoints TracePoints;
 
-	FRotator eyeRotation;
-	GetActorEyesViewPoint(TracePoints.StartLocation, eyeRotation);
-	TracePoints.ForwardVector = UKismetMathLibrary::GetForwardVector(eyeRotation);
+	FRotator EyeRotation;
+	GetActorEyesViewPoint(TracePoints.StartLocation, EyeRotation);
+	TracePoints.ForwardVector = UKismetMathLibrary::GetForwardVector(EyeRotation);
 
 	return TracePoints;
 }
