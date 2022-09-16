@@ -214,6 +214,10 @@
 		{
 			"Name": "SensingSystemComponent",
 			"Enabled": true
+		},
+		{
+			"Name": "ActorPoolingSystem",
+			"Enabled": true
 		}
 	]
 }
