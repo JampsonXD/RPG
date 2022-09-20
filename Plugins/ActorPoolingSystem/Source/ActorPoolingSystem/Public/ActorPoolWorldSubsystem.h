@@ -93,5 +93,11 @@ private:
 
 	UFUNCTION()
 	void ReleaseFromPool(FActorPool& ActorPool, const int ActorRemoveAmount);
+
+	UFUNCTION()
+	void OnActorLeftPool(AActor* Actor, const FActorPopData& PopData) const;
+
+	UFUNCTION()
+	void OnActorEnteredPool(AActor* Actor) const;
 	
 };

@@ -44,7 +44,7 @@ struct FActorPopData
 	FVector Location;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Actor Pool Pop Data")
-	FVector OptionalVector;
+	FVector Velocity;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Actor Pool Pop Data")
 	FRotator Rotation;
@@ -72,6 +72,16 @@ struct FActorPopData
 	virtual AActor* GetOwner() const
 	{
 		return Owner;
+	}
+
+	virtual FVector GetLocation() const
+	{
+		return Location;
+	}
+
+	virtual FRotator GetRotator() const
+	{
+		return Rotation;
 	}
 };
 
@@ -104,7 +114,9 @@ struct FActorPool
 
 	bool ShouldGrow() const;
 
-	bool ShouldShrink() const;
+	bool CanGrow() const;
+
+	bool CanShrink() const;
 
 	void Push(AActor* Actor);
 

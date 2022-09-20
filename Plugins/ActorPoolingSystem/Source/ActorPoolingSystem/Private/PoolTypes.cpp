@@ -8,9 +8,14 @@ bool FActorPool::ShouldGrow() const
 	return Pool.Num() < MinimumPoolSize;
 }
 
-bool FActorPool::ShouldShrink() const
+bool FActorPool::CanGrow() const
 {
-	return Pool.Num() > MaximumPoolSize;
+	return Pool.Num() < MaximumPoolSize;
+}
+
+bool FActorPool::CanShrink() const
+{
+	return Pool.Num() > MinimumPoolSize;
 }
 
 void FActorPool::Push(AActor* Actor)

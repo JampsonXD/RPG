@@ -16,18 +16,6 @@ const TMap<EAttachmentRule, EAttachLocation::Type> UFXManagerSubsystem::Attachme
 	{EAttachmentRule::KeepWorld, EAttachLocation::Type::KeepWorldPosition}
 };
 
-
-template <typename T>
-T* UFXManagerSubsystem::GetAssetLoaded(TSoftObjectPtr<T> SoftObjectPtr)
-{
-	if(SoftObjectPtr.IsValid())
-	{
-		return SoftObjectPtr.Get();
-	}
-
-	return SoftObjectPtr.LoadSynchronous();
-}
-
 bool UFXManagerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	return true;
@@ -172,7 +160,7 @@ void UFXManagerSubsystem::StopActivePack(const FActiveEffectPackHandle& Handle)
 UFXSystemComponent* UFXManagerSubsystem::SpawnVFXDataAtLocation(const FVFXData VFXData, const AActor* SourceActor, const FTransform& Transform) const
 {
 
-	UFXSystemAsset* Asset = GetAssetLoaded<UFXSystemAsset>(VFXData.ParticleSystem);
+	UFXSystemAsset* Asset = VFXData.ParticleSystem;
 	if(!Asset)
 	{
 		return nullptr;
@@ -199,8 +187,8 @@ UFXSystemComponent* UFXManagerSubsystem::SpawnVFXDataAtLocation(const FVFXData V
 
 UAudioComponent* UFXManagerSubsystem::SpawnSFXDataAtLocation(const FSFXData SFXData, const AActor* SourceActor, const FTransform& Transform) const
 {
-	USoundBase* Asset = GetAssetLoaded<USoundBase>(SFXData.Sound);
 
+	USoundBase* Asset = SFXData.Sound;
 	if(!Asset)
 	{
 		return nullptr;
@@ -224,7 +212,8 @@ UAudioComponent* UFXManagerSubsystem::SpawnSFXDataAtLocation(const FSFXData SFXD
 UFXSystemComponent* UFXManagerSubsystem::SpawnVFXDataAtComponent(const FVFXData VFXData, const AActor* SourceActor,
 	USceneComponent* AttachComponent) const
 {
-	UFXSystemAsset* Asset = GetAssetLoaded<UFXSystemAsset>(VFXData.ParticleSystem);
+
+	UFXSystemAsset* Asset = VFXData.ParticleSystem;
 	if (!Asset)
 	{
 		return nullptr;
@@ -259,8 +248,8 @@ UFXSystemComponent* UFXManagerSubsystem::SpawnVFXDataAtComponent(const FVFXData 
 UAudioComponent* UFXManagerSubsystem::SpawnSFXDataAtComponent(const FSFXData SFXData, const AActor* SourceActor,
 	USceneComponent* AttachComponent) const
 {
-	USoundBase* Asset = GetAssetLoaded<USoundBase>(SFXData.Sound);
 
+	USoundBase* Asset = SFXData.Sound;
 	if (!Asset)
 	{
 		return nullptr;

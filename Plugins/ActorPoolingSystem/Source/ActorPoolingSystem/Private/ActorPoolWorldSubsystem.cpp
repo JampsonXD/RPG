@@ -62,8 +62,7 @@ AActor* UActorPoolWorldSubsystem::RequestActorFromPool(TSubclassOf<AActor> Actor
 	if(PoolMap.Contains(ActorClass))
 	{
 		AActor* Actor = ForceSpawnActor(ActorClass);
-		ToggleActorPoolSettings(Actor, false);
-		IPooledActorInterface::Execute_OnPoolLeft(Actor, PopData);
+		OnActorLeftPool(Actor, PopData);
 		return Actor;
 	}
 
@@ -96,9 +95,15 @@ bool UActorPoolWorldSubsystem::AddActorToPool(AActor* Actor)
 
 	if (FActorPool* Pool = PoolMap.Find(Actor->GetClass()))
 	{
+		// Make sure our pool is able to grow before trying to add the actor
+		if(!Pool->CanGrow())
+		{
+			Actor->Destroy();
+			return false;
+		}
+
 		Pool->Push(Actor);
-		ToggleActorPoolSettings(Actor, true);
-		IPooledActorInterface::Execute_OnPoolEntered(Actor);
+		OnActorEnteredPool(Actor);
 		return true;
 	}
 
@@ -161,8 +166,7 @@ AActor* UActorPoolWorldSubsystem::PopActorOfType(TSubclassOf<AActor> ActorClass,
 	if (FActorPool* Pool = PoolMap.Find(ActorClass))
 	{
 		AActor* Actor = Pool->Pop();
-		ToggleActorPoolSettings(Actor, false);
-		IPooledActorInterface::Execute_OnPoolLeft(Actor, PopData);
+		OnActorLeftPool(Actor, PopData);
 		if (Pool->ShouldGrow())
 		{
 			FillPool(ActorClass, *Pool, Pool->MinimumPoolSize - Pool->Num());
@@ -197,11 +201,6 @@ void UActorPoolWorldSubsystem::ToggleActorPoolSettings(AActor* Actor, const bool
 	Actor->SetReplicates(!bOnEnteringPool);
 	Actor->SetActorHiddenInGame(bOnEnteringPool);
 	Actor->SetActorEnableCollision(!bOnEnteringPool);
-
-	if(bOnEnteringPool)
-	{
-		Actor->SetActorLocation(PoolingLocation);
-	}
 }
 
 void UActorPoolWorldSubsystem::FillPool(UClass* Class, FActorPool& ActorPool, const int ActorSpawnAmount) const
@@ -212,8 +211,7 @@ void UActorPoolWorldSubsystem::FillPool(UClass* Class, FActorPool& ActorPool, co
 	for(int i = 0; i < ActorSpawnAmount; i++)
 	{
 		AActor* Actor = ForceSpawnActor(Class);
-		ToggleActorPoolSettings(Actor, true);
-		IPooledActorInterface::Execute_OnPoolEntered(Actor);
+		OnActorEnteredPool(Actor);
 		ActorPool.Push(Actor);
 	}
 }
@@ -240,4 +238,54 @@ void UActorPoolWorldSubsystem::ReleaseFromPool(FActorPool& ActorPool, const int 
 			}
 		}
 	}
+}
+
+void UActorPoolWorldSubsystem::OnActorLeftPool(AActor* Actor, const FActorPopData& PopData) const
+{
+	// Set the actors location based on the passed in data
+	Actor->SetActorLocation(PopData.GetLocation());
+
+	// Enable/Disabling Performance related settings for Pool
+	ToggleActorPoolSettings(Actor, false);
+
+	// Setup Actor based on passed in Pop Data
+	Actor->SetOwner(PopData.GetOwner());
+	Actor->SetInstigator(PopData.GetInstigator());
+	Actor->SetActorRotation(PopData.GetRotator());
+
+	/* Interface functions are called after doing pool specific changes,
+	 * this way the interfaces can still overwrite some common functionality if needed and also have things already setup such as replication,
+	 * collision, and the actor being visible in the scene
+	 */
+
+	// Interface might be implemented in blueprint only, cast and verify our pointer is valid before calling native function
+	if(IPooledActorInterface* Interface = Cast<IPooledActorInterface>(Actor))
+	{
+		Interface->OnPoolLeft(PopData);
+	}
+
+	IPooledActorInterface::Execute_K2_OnPoolLeft(Actor, PopData);
+}
+
+void UActorPoolWorldSubsystem::OnActorEnteredPool(AActor* Actor) const
+{
+	// Interface might be implemented in blueprint only, cast and verify our pointer is valid before calling native function
+	if (IPooledActorInterface* Interface = Cast<IPooledActorInterface>(Actor))
+	{
+		Interface->OnPoolEntered();
+	}
+
+	IPooledActorInterface::Execute_K2_OnPoolEntered(Actor);
+
+	/* Interface functions are called before doing pool optimizations,
+	 * this way if the actor still needed access to things such as the end location for the interface functions, it still has relevant data
+	*/
+
+	// Enable/Disabling Performance related settings for Pool
+	ToggleActorPoolSettings(Actor, true);
+
+	// Set location of our actor to the pooling location, null out the owning actor and instigator
+	Actor->SetActorLocation(PoolingLocation);
+	Actor->SetOwner(nullptr);
+	Actor->SetInstigator(nullptr);
 }

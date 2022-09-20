@@ -141,7 +141,7 @@ struct FVFXData : public FFXData
 	}
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TSoftObjectPtr<UFXSystemAsset> ParticleSystem;
+	UFXSystemAsset* ParticleSystem;
 
 };
 
@@ -157,7 +157,7 @@ struct FSFXData : public FFXData
 	}
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TSoftObjectPtr<USoundBase> Sound;
+	USoundBase* Sound;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TEnumAsByte<EAudioType> AudioType;

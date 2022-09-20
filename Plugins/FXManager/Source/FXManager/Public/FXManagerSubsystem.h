@@ -28,8 +28,6 @@ public:
 	// End Subsystem Overrides
 
 private:
-	template <typename T>
-	static T* GetAssetLoaded(TSoftObjectPtr<T> SoftObjectPtr);
 
 	/* What our next Id should be for any active pack */
 	int Internal_NextId = 0;
