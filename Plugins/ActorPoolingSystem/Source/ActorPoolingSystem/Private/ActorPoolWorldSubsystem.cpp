@@ -2,7 +2,6 @@
 
 
 #include "ActorPoolWorldSubsystem.h"
-
 #include "PooledActorInterface.h"
 
 
@@ -24,14 +23,24 @@ void UActorPoolWorldSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
+UActorPoolWorldSubsystem* UActorPoolWorldSubsystem::GetActorPoolWorldSubsystem(const UObject* WorldContextObject)
+{
+	if(!WorldContextObject)
+	{
+		return nullptr;
+	}
+
+	const UWorld* World = WorldContextObject->GetWorld();
+	return World ? World->GetSubsystem<UActorPoolWorldSubsystem>() : nullptr;
+}
+
 void UActorPoolWorldSubsystem::SetupActorPoolDefaults()
 {
-	DefaultActorPoolData = DefaultActorPoolDataTable.LoadSynchronous();
 
 	/* If we are pointing to a valid data table, create actor pools based on row information.
 	 * Create Pool handles checking if classes are valid and handling pool size errors.
 	 */
-	if (DefaultActorPoolData)
+	if (const UDataTable* DefaultActorPoolData = DefaultActorPoolDataTable.LoadSynchronous())
 	{
 		TArray<FDefaultActorPoolData*> PoolData;
 		DefaultActorPoolData->GetAllRows("", PoolData);
@@ -86,9 +95,7 @@ bool UActorPoolWorldSubsystem::AddActorToPool(AActor* Actor)
 		return false;
 	}
 
-	const bool bHasPool = PoolMap.Contains(Actor->GetClass());
-
-	if(!bHasPool)
+	if(!PoolMap.Contains(Actor->GetClass()))
 	{
 		CreatePool(Actor->GetClass(), DefaultMinimumPoolSize, DefaultMaximumPoolSize, DefaultPoolSize);
 	}
@@ -195,19 +202,8 @@ bool UActorPoolWorldSubsystem::IsValidActorClass(const TSubclassOf<AActor>& Acto
 	return ActorClass && ActorClass->ImplementsInterface(UPooledActorInterface::StaticClass());
 }
 
-void UActorPoolWorldSubsystem::ToggleActorPoolSettings(AActor* Actor, const bool bOnEnteringPool) const
-{
-	Actor->SetActorTickEnabled(!bOnEnteringPool);
-	Actor->SetReplicates(!bOnEnteringPool);
-	Actor->SetActorHiddenInGame(bOnEnteringPool);
-	Actor->SetActorEnableCollision(!bOnEnteringPool);
-}
-
 void UActorPoolWorldSubsystem::FillPool(UClass* Class, FActorPool& ActorPool, const int ActorSpawnAmount) const
 {
-	UWorld* World = GetWorld();
-	const FVector* SpawnLocation = &PoolingLocation;
-	FActorPopData PopData;
 	for(int i = 0; i < ActorSpawnAmount; i++)
 	{
 		AActor* Actor = ForceSpawnActor(Class);
@@ -242,50 +238,43 @@ void UActorPoolWorldSubsystem::ReleaseFromPool(FActorPool& ActorPool, const int 
 
 void UActorPoolWorldSubsystem::OnActorLeftPool(AActor* Actor, const FActorPopData& PopData) const
 {
-	// Set the actors location based on the passed in data
-	Actor->SetActorLocation(PopData.GetLocation());
-
-	// Enable/Disabling Performance related settings for Pool
-	ToggleActorPoolSettings(Actor, false);
+	// Turn on replication
+	Actor->SetReplicates(true);
 
 	// Setup Actor based on passed in Pop Data
+	Actor->SetActorLocation(PopData.GetLocation());
 	Actor->SetOwner(PopData.GetOwner());
 	Actor->SetInstigator(PopData.GetInstigator());
 	Actor->SetActorRotation(PopData.GetRotator());
 
-	/* Interface functions are called after doing pool specific changes,
-	 * this way the interfaces can still overwrite some common functionality if needed and also have things already setup such as replication,
-	 * collision, and the actor being visible in the scene
-	 */
+	// Performance and pool specific settings turned off when leaving pool
+	Actor->SetActorTickEnabled(true);
+	Actor->SetActorHiddenInGame(false);
 
-	// Interface might be implemented in blueprint only, cast and verify our pointer is valid before calling native function
-	if(IPooledActorInterface* Interface = Cast<IPooledActorInterface>(Actor))
-	{
-		Interface->OnPoolLeft(PopData);
-	}
+	IPooledActorInterface::Execute_OnPoolLeft(Actor, PopData);
 
-	IPooledActorInterface::Execute_K2_OnPoolLeft(Actor, PopData);
+	// Enable collision after calling everything else, that way we won't call overlap events until setup is complete
+	Actor->SetActorEnableCollision(true);
 }
 
 void UActorPoolWorldSubsystem::OnActorEnteredPool(AActor* Actor) const
 {
-	// Interface might be implemented in blueprint only, cast and verify our pointer is valid before calling native function
-	if (IPooledActorInterface* Interface = Cast<IPooledActorInterface>(Actor))
-	{
-		Interface->OnPoolEntered();
-	}
-
-	IPooledActorInterface::Execute_K2_OnPoolEntered(Actor);
+	IPooledActorInterface::Execute_OnPoolEntered(Actor);
 
 	/* Interface functions are called before doing pool optimizations,
 	 * this way if the actor still needed access to things such as the end location for the interface functions, it still has relevant data
 	*/
 
-	// Enable/Disabling Performance related settings for Pool
-	ToggleActorPoolSettings(Actor, true);
+	// Disable collision
+	Actor->SetActorEnableCollision(false);
 
 	// Set location of our actor to the pooling location, null out the owning actor and instigator
 	Actor->SetActorLocation(PoolingLocation);
 	Actor->SetOwner(nullptr);
 	Actor->SetInstigator(nullptr);
+
+	// Performance and pool specific settings turned on when entering pool
+	Actor->SetActorTickEnabled(false);
+	Actor->SetActorHiddenInGame(true);
+	Actor->SetReplicates(false);
 }

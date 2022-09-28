@@ -5,6 +5,7 @@
 
 #include "RPG_GameSingleton.h"
 #include "RPG_PlayerController.h"
+#include "Characters/RPGCharacterInterface.h"
 #include "GAS/RPG_AbilitySystemComponent.h"
 #include "GAS/RPG_AttributeSet.h"
 
@@ -35,6 +36,12 @@ void UEC_SuperDamage::Execute_Implementation(const FGameplayEffectCustomExecutio
 	FAggregatorEvaluateParameters EvaluateParameters;
 	EvaluateParameters.SourceTags = SourceTags;
 	EvaluateParameters.TargetTags = TargetTags;
+
+	// Check if our character is already dead before proceeding
+	if(TargetActor && TargetActor->Implements<URPGCharacterInterface>() && IRPGCharacterInterface::Execute_IsDead(TargetActor))
+	{
+		return;
+	}
 	
 	// Find a matching Damage Type from our singleton and call its calculation to get our return damage
 	const URPG_GameSingleton* Singleton = URPG_GameSingleton::GetSingleton();
@@ -63,7 +70,7 @@ void UEC_SuperDamage::Execute_Implementation(const FGameplayEffectCustomExecutio
 	if(SourceController && TargetActor)
 	{
 		const FVector DamageLocation = HitResult ? HitResult->ImpactPoint : TargetActor->GetActorLocation();
-		const FDamagePopupData PopupData = FDamagePopupData(DamageTypeData.DamageColor, Damage, false, DamageLocation);
+		const FDamagePopupData PopupData = FDamagePopupData(DamageTypeData.DamageColor, PostMitigationDamage, false, DamageLocation);
 		SourceController->AddPendingDamagePopup(PopupData);
 	}
 	

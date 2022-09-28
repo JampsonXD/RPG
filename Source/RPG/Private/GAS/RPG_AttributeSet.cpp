@@ -21,66 +21,10 @@ void URPG_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	FGameplayEffectContextHandle Context = Data.EffectSpec.GetContext();
-	UAbilitySystemComponent* Source = Context.GetOriginalInstigatorAbilitySystemComponent();
-	const FGameplayTagContainer& SourceTags = *Data.EffectSpec.CapturedSourceTags.GetAggregatedTags();
-	FGameplayTagContainer SpecAssetTags;
-	Data.EffectSpec.GetAllAssetTags(SpecAssetTags);
-
-	// Get the Target actor, which should be our owner
-	AActor* TargetActor = nullptr;
-	AController* TargetController = nullptr;
-	ARPG_Character* TargetCharacter = nullptr;
-	if(Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
-	{
-		TargetActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
-		TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
-		TargetCharacter = Cast<ARPG_Character>(TargetActor);
-	}
-
-	// Get the source actor
-	AActor* SourceActor = nullptr;
-	AController* SourceController = nullptr;
-	ARPG_Character* SourceCharacter = nullptr;
-	if(Source && Source->AbilityActorInfo.IsValid() && Source->AbilityActorInfo->PlayerController.IsValid())
-	{
-		SourceActor = Source->AbilityActorInfo->AvatarActor.Get();
-		SourceController = Source->AbilityActorInfo->PlayerController.Get();
-		
-		if(SourceController == nullptr && SourceActor != nullptr)
-		{
-			if(APawn* Pawn = Cast<APawn>(SourceActor))
-			{
-				SourceController = Pawn->GetController();
-			}
-		}
-
-		// Use the controller to find the source pawn
-		if(SourceController)
-		{
-			SourceCharacter = Cast<ARPG_Character>(SourceController->GetPawn());
-		}
-		else
-		{
-			SourceCharacter = Cast<ARPG_Character>(SourceActor);
-		}
-
-		if(Context.GetEffectCauser())
-		{
-			SourceActor = Context.GetEffectCauser();
-		}
-	}
 
 	if(Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
-		const float DamageDone = GetDamage();
-		SetDamage(0.f);
-
-		if(DamageDone > 0.f)
-		{
-			const float NewHealth = FMath::Max<float>(GetHealth() - DamageDone, 0.f);
-			SetHealth(NewHealth);
-		}
+		HandleDamageAttribute(Data);
 	}
 
 	if(Data.EvaluatedData.Attribute == GetHealthAttribute())
@@ -97,7 +41,42 @@ void URPG_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 
 	if(Data.EvaluatedData.Attribute == GetExperienceAttribute())
 	{
+		const FGameplayEffectContextHandle Context = Data.EffectSpec.GetContext();
+		UAbilitySystemComponent* Source = Context.GetOriginalInstigatorAbilitySystemComponent();
+
 		HandleExperienceAttribute(Source);
+	}
+}
+
+void URPG_AttributeSet::HandleDamageAttribute(const FGameplayEffectModCallbackData& Data)
+{
+	// Get the Target actor, which should be our owner
+	AActor* TargetActor = nullptr;
+	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
+	{
+		TargetActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+	}
+
+	const bool bImplementsRPGInterface = TargetActor->Implements<URPGCharacterInterface>();
+
+	// Return early if we implement the rpg interface and are dead
+	if (bImplementsRPGInterface && IRPGCharacterInterface::Execute_IsDead(TargetActor))
+	{
+		return;
+	}
+
+	const float DamageDone = GetDamage();
+	SetDamage(0.f);
+
+	if (DamageDone > 0.f)
+	{
+		const float NewHealth = FMath::Max<float>(GetHealth() - DamageDone, 0.f);
+		SetHealth(NewHealth);
+
+		if(NewHealth <= 0.f && bImplementsRPGInterface)
+		{
+			IRPGCharacterInterface::Execute_DeathEvent(TargetActor);
+		}
 	}
 }
 

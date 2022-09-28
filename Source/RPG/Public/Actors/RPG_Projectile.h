@@ -28,9 +28,9 @@ public:
 	ARPG_Projectile();
 
 	// Start of Pooled Actor Interface overrides
-	virtual void OnPoolEntered() override;
+	virtual void OnPoolEntered_Implementation() override;
 
-	virtual void OnPoolLeft(const FActorPopData& PopupData) override;
+	virtual void OnPoolLeft_Implementation(const FActorPopData& PopData) override;
 
 	// End of Pooled Actor Interface overrides
 

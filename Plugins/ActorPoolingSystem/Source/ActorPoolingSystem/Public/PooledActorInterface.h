@@ -24,15 +24,9 @@ class ACTORPOOLINGSYSTEM_API IPooledActorInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	UFUNCTION()
-	virtual void OnPoolEntered() = 0;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Pool Actor", meta = (DisplayName = "On Pool Entered"))
+	void OnPoolEntered();
 
-	UFUNCTION()
-	virtual void OnPoolLeft(const FActorPopData& PopupData) = 0;
-
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Pool Actor", meta = (DisplayName = "On Pool Entered"))
-	void K2_OnPoolEntered();
-
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Pool Actor", meta = (DisplayName = "On Pool Left"))
-	void K2_OnPoolLeft(const FActorPopData& PopData);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Pool Actor", meta = (DisplayName = "On Pool Left"))
+	void OnPoolLeft(const FActorPopData& PopData);
 };

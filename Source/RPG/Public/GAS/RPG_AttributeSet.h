@@ -73,6 +73,8 @@ protected:
 
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 
+	virtual void HandleDamageAttribute(const FGameplayEffectModCallbackData& Data);
+
 	virtual void HandleExperienceAttribute(UAbilitySystemComponent* ASC);
 
 	virtual float EvaluateExperienceGained(URPG_AbilitySystemComponent* ASC, const float InExperience, float& LevelsGained);

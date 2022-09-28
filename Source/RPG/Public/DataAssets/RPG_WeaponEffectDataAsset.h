@@ -33,4 +33,7 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FEffectPack WeaponEmptyEffects;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FEffectPack BulletImpactEffects;
 };

@@ -3,6 +3,7 @@
 
 #include "Actors/RPG_Projectile.h"
 
+class UActorPoolWorldSubsystem;
 // Sets default values
 ARPG_Projectile::ARPG_Projectile()
 {
@@ -15,21 +16,22 @@ ARPG_Projectile::ARPG_Projectile()
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Movement Component"));
 }
 
-void ARPG_Projectile::OnPoolEntered()
+void ARPG_Projectile::OnPoolEntered_Implementation()
 {
 	// Clear our life span timer, stop simulating our projectile movement
 	SetLifeSpan(0);
 	const FHitResult HitResult;
 	ProjectileMovementComponent->StopSimulating(HitResult);
 
+
 }
 
-void ARPG_Projectile::OnPoolLeft(const FActorPopData& PopupData)
+void ARPG_Projectile::OnPoolLeft_Implementation(const FActorPopData& PopData)
 {
 	// Set our projectile lifespan and set data for our projectile movement
-	SetLifeSpan(PopupData.Magnitude);
+	SetLifeSpan(PopData.Magnitude);
 	ProjectileMovementComponent->SetUpdatedComponent(CollisionComponent);
-	ProjectileMovementComponent->Velocity = PopupData.Velocity;
+	ProjectileMovementComponent->Velocity = PopData.Velocity;
 }
 
 void ARPG_Projectile::LifeSpanExpired()

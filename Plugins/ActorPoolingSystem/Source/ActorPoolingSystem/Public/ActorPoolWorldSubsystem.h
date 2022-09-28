@@ -26,9 +26,6 @@ private:
 protected:
 
 	UPROPERTY()
-	UDataTable* DefaultActorPoolData;
-
-	UPROPERTY()
 	int DefaultPoolSize = 10;
 
 	UPROPERTY()
@@ -52,6 +49,10 @@ public:
 // End of Subsystem overrides
 
 public:
+
+	// Static helper function for getting the actor pool world subsystem for our world
+	UFUNCTION()
+	static UActorPoolWorldSubsystem* GetActorPoolWorldSubsystem(const UObject* WorldContextObject);
 
 	UFUNCTION(BlueprintCallable, Category = "Actor Pool World Subsystem")
 	void SetupActorPoolDefaults();
@@ -84,9 +85,6 @@ private:
 
 	UFUNCTION()
 	static bool IsValidActorClass(const TSubclassOf<AActor>& ActorClass);
-
-	UFUNCTION()
-	void ToggleActorPoolSettings(AActor* Actor, const bool bOnEnteringPool) const;
 
 	UFUNCTION()
 	void FillPool(UClass* Class, FActorPool& ActorPool, const int ActorSpawnAmount) const;
