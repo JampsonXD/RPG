@@ -23,12 +23,12 @@ bool UFXManagerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 
 void UFXManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-
+	Super::Initialize(Collection);
 }
 
 void UFXManagerSubsystem::Deinitialize()
 {
-
+	Super::Deinitialize();
 }
 
 UFXManagerSubsystem* UFXManagerSubsystem::GetFXManager()

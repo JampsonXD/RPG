@@ -25,7 +25,7 @@ public class QuestSystem : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core",
+				"Core", "Engine","DeveloperSettings"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

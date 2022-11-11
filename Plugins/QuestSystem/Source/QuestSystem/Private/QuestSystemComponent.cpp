@@ -2,107 +2,100 @@
 
 
 #include "QuestSystemComponent.h"
-#include "Kismet/KismetSystemLibrary.h"
+#include "State/QuestState.h"
+#include "State/TaskState.h"
 
-
-// Sets default values for this component's properties
-UQuestSystemComponent::UQuestSystemComponent(const class FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
-{
-	// Can't tick
-	PrimaryComponentTick.bCanEverTick = false;
-}
-
-TArray<FQuest> UQuestSystemComponent::GetQuests() const
-{
-	return Quests;
-}
-
-FQuest UQuestSystemComponent::GetActiveQuest() const
-{
-	return ActiveQuest;
-}
-
-void UQuestSystemComponent::InitQuestComponent()
+UQuestSystemComponent::UQuestSystemComponent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	
 }
 
-bool UQuestSystemComponent::AddQuest(FQuest NewQuest, bool bSetAsActiveQuest)
+void UQuestSystemComponent::InitializeComponent()
 {
-	if(ContainsQuest(NewQuest))
+	Super::InitializeComponent();
+
+	// Cache a weak pointer to our Quest Subsystem
+	SetQuestSubsystem(UQuestSubsystem::GetQuestSubsystem(this));
+}
+
+bool UQuestSystemComponent::StartQuest(const FName QuestId)
+{
+	// Only start a quest if it is not already started
+	if(ActiveQuestStates.Contains(QuestId))
 	{
 		return false;
 	}
 
-	// Add the Quest to our Quests Array
-	Quests.Add(NewQuest);
-
-	// Delegate Call
-	if(NewQuestAddedDelegate.IsBound())
-	{
-		NewQuestAddedDelegate.Broadcast(NewQuest);
-	}
-
-	// SetAsActiveQuest is true or we just added our only Quest
-	if(bSetAsActiveQuest || Quests.Num() == 1)
-	{
-		SetActiveQuest(NewQuest);
-	}
-
-	return true;
-}
-
-bool UQuestSystemComponent::SwapActiveQuest(FQuest& NewActiveQuest)
-{
-	// Current Quest is already New Active Quest
-	if(NewActiveQuest == ActiveQuest)
+	const FQuest* QuestDef = nullptr;
+	// Make sure the QuestId we passed in has a quest definition
+	if (!QuestSubsystem->TryGetQuestDefinition(QuestId, QuestDef))
 	{
 		return false;
 	}
 
-	SetActiveQuest(NewActiveQuest);
+	UQuestState* QuestState = NewObject<UQuestState>(this, UQuestState::StaticClass());
+	AddActiveQuestState(QuestState, QuestDef);
 	return true;
-	
 }
 
-void UQuestSystemComponent::QuestTaskFinished(FQuest& InQuest)
+void UQuestSystemComponent::UpdateTaskProgress(const FName QuestId, const FName TaskId, int Delta)
 {
-	UKismetSystemLibrary::PrintString(this, "Task Finished", true, true, FLinearColor::Green, 3.f);
-}
-
-FOnNewActiveQuest UQuestSystemComponent::GetOnNewActiveQuestDelegate() const
-{
-	return NewActiveQuestDelegate;
-}
-
-void UQuestSystemComponent::SetActiveQuest(const FQuest& NewQuest)
-{
-	const FQuest OldQuest = ActiveQuest;
-	ActiveQuest = NewQuest;
-	if(NewActiveQuestDelegate.IsBound())
+	if(UTaskState* TaskState = GetTaskState(QuestId, TaskId))
 	{
-		NewActiveQuestDelegate.Broadcast(ActiveQuest, OldQuest);
+		TaskState->UpdateTaskProgress(Delta);
 	}
 }
 
-// Quests use Gameplay tags as their Identifiers, check if this quest is already owned by checking if tags match
-bool UQuestSystemComponent::ContainsQuest(const FQuest& InQuest)
+void UQuestSystemComponent::FinishTask(const FName QuestId, const FName TaskId)
 {
-	for(FQuest& Quest : Quests)
+	if(UTaskState* TaskState = GetTaskState(QuestId, TaskId))
 	{
-		if(Quest == InQuest)
-		{
-			return true;
-		}
+		TaskState->CompleteTask();
 	}
-
-	return false;
 }
 
-void UQuestSystemComponent::SetupDefaultQuests()
+void UQuestSystemComponent::AddActiveQuestState(UQuestState* QuestState, const FQuest* QuestDefinition)
 {
-	for(const FQuest& Quest : DefaultQuests)
+	if(!QuestState)
 	{
-		AddQuest(Quest, false);
+		return;
 	}
+
+	if(ActiveQuestStates.Contains(QuestDefinition->Id))
+	{
+		return;
+	}
+
+	ActiveQuestStates.Add(QuestDefinition->Id, QuestState);
+	QuestState->InitializeQuestState(this, QuestDefinition);
+}
+
+UQuestState* UQuestSystemComponent::GetQuestState(FName QuestId)
+{
+	if(UQuestState** QuestState = ActiveQuestStates.Find(QuestId))
+	{
+		return *QuestState;
+	}
+
+	return nullptr;
+}
+
+UTaskState* UQuestSystemComponent::GetTaskState(FName QuestId, FName TaskId)
+{
+	if(UQuestState* QS = GetQuestState(QuestId))
+	{
+		return QS->FindTaskState(TaskId);
+	}
+
+	return nullptr;
+}
+
+UQuestSubsystem* UQuestSystemComponent::GetQuestSubsystem() const
+{
+	return QuestSubsystem.Get();
+}
+
+void UQuestSystemComponent::SetQuestSubsystem(UQuestSubsystem* Subsystem)
+{
+	QuestSubsystem = Subsystem;
 }

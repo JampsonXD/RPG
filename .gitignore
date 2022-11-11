@@ -79,6 +79,8 @@ Content/Assets/*
 Content/ParagonYin/*
 Content/KiteDemo/*
 Content/Characters/Mannequins/*
+Content/Characters/Batman/*
+Content/Characters/Azrael/*
 Content/Maps/*
 Content/Movies/*
 Content/UI/Assets/*
@@ -86,6 +88,8 @@ Content/LowPolyAnimatedModernGuns/*
 Content/AnimStarterPack/*
 Content/Characters/HeroFPP/*
 Content/Environment/*
+Content/MWBroadleafForest/*
+Content/MWCommon/*
 
 Plugins/Developer/RiderLink/*
 Plugins/ALS-Community/

@@ -2,7 +2,6 @@
 
 
 #include "QuestBlueprintFunctionLibrary.h"
-
 #include "QuestSystemInterface.h"
 
 UQuestSystemComponent* UQuestBlueprintFunctionLibrary::GetQuestSystemComponent(const AActor* InActor)

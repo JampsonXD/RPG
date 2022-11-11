@@ -9,42 +9,38 @@
  * 
  */
 
-class ATaskTrigger;
-USTRUCT(BlueprintType)
-struct FQuestTask
+UENUM()
+enum class EQuestStatus : uint8
 {
-	GENERATED_BODY()
-
-	FQuestTask()
-	{
-		TaskName = FName("Default");
-		TaskDescription = FText::GetEmpty();
-		Trigger = nullptr;
-	}
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName TaskName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText TaskDescription;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ATaskTrigger* Trigger;
-	
+	Inactive,
+	Active,
+	Completed,
+	Failed
 };
 
 UENUM()
-enum class QuestStatus : uint8
+enum class EObjectiveStatus : uint8
 {
-	Locked,
-	InProgress,
-	Completed
+	Inactive,
+	Active,
+	Completed,
+	Failed
 };
 
 UENUM()
-enum class TaskStatus : uint8
+enum class ETaskStatus : uint8
 {
-	Blocked,
-	InProgress,
-	Completed
+	Inactive,
+	Active,
+	Completed,
+	Failed
 };
+
+class UTaskState;
+class UObjectiveState;
+class UQuestState;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnQuestStatusChanged, UQuestState*, QuestState, EQuestStatus, OldStatus, EQuestStatus, NewStatus);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnObjectiveStatusChanged, UObjectiveState*, ObjectiveState, EObjectiveStatus, OldStatus, EObjectiveStatus, NewStatus);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnTaskStatusChanged, UTaskState*, TaskState, ETaskStatus, OldStatus, ETaskStatus, NewStatus);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnTaskProgressUpdated, UTaskState*, TaskState, int, OldValue, int, NewValue);

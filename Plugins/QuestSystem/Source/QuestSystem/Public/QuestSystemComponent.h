@@ -3,90 +3,82 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
 #include "Quest.h"
+#include "QuestSubsystem.h"
+#include "Components/ActorComponent.h"
 #include "QuestSystemComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNewActiveQuest, const FQuest, NewActiveQuest, const FQuest, OldActiveQuest);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNewQuestAdded, const FQuest, NewQuest);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestStarted, FQuest, Quest);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestCompleted, FQuest, Quest);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestFailed, FQuest, Quest);
 
 UCLASS(ClassGroup=(QuestSystem), EditInlineNew, meta=(BlueprintSpawnableComponent))
 class QUESTSYSTEM_API UQuestSystemComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()
 
+private:
+
+	/* Cached Weak Pointer to our Quest Subsystem */
+	UPROPERTY()
+	TWeakObjectPtr<UQuestSubsystem> QuestSubsystem;
+
+	/* Map of Quest Ids to Quest States. Contains all active quests that are player currently has access to */
+	UPROPERTY()
+	TMap<FName, UQuestState*> ActiveQuestStates;
+
 public:
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Quest System Component")
-	TArray<FQuest> GetQuests() const;
+	/* Delegates */
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Quest System Component")
-	FQuest GetActiveQuest() const;
+	UPROPERTY(BlueprintAssignable, Category = "Quest System Component | Delegates")
+	FQuestStarted OnQuestStarted;
 
-	/** Used to initialize our Quest Component, Default Quests are granted here **/
-	void InitQuestComponent();
+	UPROPERTY(BlueprintAssignable, Category = "Quest System Component | Delegates")
+	FQuestCompleted OnQuestCompleted;
 
-	
-	/** Tries to add a new Quest to the set of quests this component will look over
-	* @param NewQuest : Quest to try to add to our component
-	* @param bSetAsActiveQuest : Whether we should set our new Quest as the Active Quest
-	* @return bool : Returns whether the Quest was added successfully or not
-	*/
-	UFUNCTION(BlueprintCallable, Category = "Quest System Component")
-	bool AddQuest(FQuest NewQuest, bool bSetAsActiveQuest = false);
+	UPROPERTY(BlueprintAssignable, Category = "Quest System Component | Delegates")
+	FQuestFailed OnQuestFailed;
 
-	/** Swaps the Active Quest with a new Quest
-	 * @param NewActiveQuest : Quest we are trying to swap
-	 * @return  bool : Whether the swap was successful or not
+	/* End Delegates */
+
+public:
+
+	virtual void InitializeComponent() override;
+
+public:
+
+	/* Starts a Quest and adds it to the set of active quests if it is not already active.
+	 * 
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Quest System Component")
-	bool SwapActiveQuest(FQuest& NewActiveQuest);
+	bool StartQuest(const FName QuestId);
 
-	UFUNCTION(BlueprintCallable, Category = "Quest System Component")
-	void QuestTaskFinished(FQuest& InQuest);
-
-	/** Quest Delegates Getters **/
-	UFUNCTION()
-	FOnNewActiveQuest GetOnNewActiveQuestDelegate() const;
-	
-protected:
-
-	// Current list of quests this component owns and are not finished
-	UPROPERTY()
-	TArray<FQuest> Quests;
-
-	// The Quest this component is actively tracking
-	UPROPERTY()
-	FQuest ActiveQuest;
-
-	// Default Quests to give the actor
-	UPROPERTY(EditAnywhere, Category = "Quest | Default")
-	TArray<FQuest> DefaultQuests;
-
-	/** Quest Delegates **/
-
-	// A new Active Quest was set
-	UPROPERTY(BlueprintAssignable)
-	FOnNewActiveQuest NewActiveQuestDelegate;
-
-	// A new Quest was added to our Quest Array
-	UPROPERTY(BlueprintAssignable)
-	FOnNewQuestAdded NewQuestAddedDelegate;
-
-	/** Function that we will call whenever we want to change our Active Quest, calls delegates
-	*@param NewQuest : Quest we are setting as our new Active Quest
-	*/
-	UFUNCTION()
-	void SetActiveQuest(const FQuest& NewQuest);
-
-	/** Checks to see if we already have this quest added to our Quests Array
-	 *@param InQuest : Quest we will be checking with against our Quest Array
-	 *@return bool : Returns true if we already have the quest
+	/* Updates a Tasks Progress if it needs a specific amount of targets completed.
+	 * Finishes a Task if the Task does not require a set amount of targets
 	 */
-	UFUNCTION()
-	bool ContainsQuest(const FQuest& InQuest);
+	UFUNCTION(BlueprintCallable, Category = "Quest System Component")
+	void UpdateTaskProgress(const FName QuestId, const FName TaskId, int Delta);
 
-	/** Adds our default Quests to our Component **/
-	void SetupDefaultQuests();
+	/* Finishes a Task even if the specific target goal is not completed */
+	UFUNCTION(BlueprintCallable, Category = "Quest System Component")
+	void FinishTask(const FName QuestId, const FName TaskId);
+
+private:
+
+	void AddActiveQuestState(UQuestState* QuestState, const FQuest* QuestDefinition);
+
+	UFUNCTION()
+	UQuestState* GetQuestState(FName QuestId);
+
+	UFUNCTION()
+	UTaskState* GetTaskState(FName QuestId, FName TaskId);
+
+public:
+
+	UFUNCTION(BlueprintPure)
+	UQuestSubsystem* GetQuestSubsystem() const;
+
+	UFUNCTION()
+	void SetQuestSubsystem(UQuestSubsystem* Subsystem);
  
 };
