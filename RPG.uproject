@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.0",
+	"EngineAssociation": "5.1",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -147,11 +147,6 @@
 			"Enabled": true
 		},
 		{
-			"Name": "PlatformFunctions",
-			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/238094eed75b447098c7efe55afe8402"
-		},
-		{
 			"Name": "ApexDestruction",
 			"Enabled": true
 		},
@@ -165,10 +160,6 @@
 		},
 		{
 			"Name": "JsonBlueprintUtilities",
-			"Enabled": true
-		},
-		{
-			"Name": "MetaHuman",
 			"Enabled": true
 		},
 		{
@@ -195,21 +186,6 @@
 		{
 			"Name": "FXManager",
 			"Enabled": true
-		},
-		{
-			"Name": "DLSS",
-			"Enabled": true,
-			"MarketplaceURL": "https://www.unrealengine.com/marketplace/en-US/product/nvidia-dlss"
-		},
-		{
-			"Name": "DLSSMoviePipelineSupport",
-			"Enabled": true,
-			"MarketplaceURL": "https://www.unrealengine.com/marketplace/en-US/product/nvidia-dlss"
-		},
-		{
-			"Name": "NIS",
-			"Enabled": true,
-			"MarketplaceURL": "https://www.unrealengine.com/marketplace/en-US/product/nvidia-dlss"
 		},
 		{
 			"Name": "SensingSystemComponent",
