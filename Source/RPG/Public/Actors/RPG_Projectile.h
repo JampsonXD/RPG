@@ -40,6 +40,10 @@ public:
 
 protected:
 
+	/* Returns the calling projectile back to its actor pool */ 
+	UFUNCTION(BlueprintCallable)
+	void ReturnProjectileToPool();
+
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "LifeSpanExpired"))
 	void K2_LifeSpanExpired();
 

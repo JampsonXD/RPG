@@ -3,6 +3,8 @@
 
 #include "Actors/RPG_Projectile.h"
 
+#include "RPGBFL_MainFunctions.h"
+
 class UActorPoolWorldSubsystem;
 // Sets default values
 ARPG_Projectile::ARPG_Projectile()
@@ -37,6 +39,11 @@ void ARPG_Projectile::OnPoolLeft_Implementation(const FActorPopData& PopData)
 void ARPG_Projectile::LifeSpanExpired()
 {
 	K2_LifeSpanExpired();
+}
+
+void ARPG_Projectile::ReturnProjectileToPool()
+{
+	URPGBFL_MainFunctions::AddActorToPool(this);
 }
 
 

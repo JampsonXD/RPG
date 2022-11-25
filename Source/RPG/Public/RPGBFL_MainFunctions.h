@@ -38,6 +38,9 @@ class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, Category = "RPGBFL Main Functions")
 	static bool GetFirstActorOfClassOrFirstActor(TArray<AActor*> ActorArray, TSubclassOf<AActor> ActorFilter, AActor*& FoundActor);
 
+	UFUNCTION(BlueprintCallable, Category = "RPGBFL Main Functions")
+	static bool AddActorToPool(AActor* TargetActor);
+
 	UFUNCTION(BlueprintCallable, Category = "RPG Effects")
 	static FActiveEffectPackHandle PlayEffectPackAtLocation(FEffectPack EffectPack, AActor* SourceActor,
 	AActor* TargetActor = nullptr, EEffectActivationType ActivationType = EEffectActivationType::Instant, FTransform Transform = FTransform());

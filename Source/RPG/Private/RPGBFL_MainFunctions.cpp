@@ -5,6 +5,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
+#include "ActorPoolWorldSubsystem.h"
 #include "RPG_GameSingleton.h"
 
 int URPGBFL_MainFunctions::AppendUnique(const TArray<UProperty*>& TargetArray, UPARAM(ref)TArray<UProperty*>& OutArray)
@@ -46,8 +47,23 @@ bool URPGBFL_MainFunctions::GetFirstActorOfClassOrFirstActor(TArray<AActor*> Act
 	return true;
 }
 
+bool URPGBFL_MainFunctions::AddActorToPool(AActor* TargetActor)
+{
+	if(!TargetActor)
+	{
+		return false;
+	}
+
+	if(UActorPoolWorldSubsystem* Subsystem = UActorPoolWorldSubsystem::GetActorPoolWorldSubsystem(TargetActor))
+	{
+		return Subsystem->AddActorToPool(TargetActor);	
+	}
+
+	return false;
+}
+
 FActiveEffectPackHandle URPGBFL_MainFunctions::PlayEffectPackAtLocation(FEffectPack EffectPack, AActor* SourceActor,
-	AActor* TargetActor, EEffectActivationType ActivationType, FTransform Transform)
+                                                                        AActor* TargetActor, EEffectActivationType ActivationType, FTransform Transform)
 {
 	if(UFXManagerSubsystem* Manager = UFXManagerSubsystem::GetFXManager()) return Manager->PlayEffectAtLocation(SourceActor, TargetActor, EffectPack, ActivationType, Transform);
 

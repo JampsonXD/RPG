@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GAS_Types.h"
 #include "Abilities/GameplayAbility.h"
+#include "Actors/RPG_Projectile.h"
 #include "RPG_GameplayAbility.generated.h"
 
 /**
@@ -68,6 +69,20 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "RPG Gameplay Ability | Camera")
 	void RemoveCameraEffectFromOwner(UParticleSystemComponent* ParticleSystemComponent);
+
+	UFUNCTION(BlueprintCallable, Category = "RPG Gameplay Ability | Actor Spawning")
+	ARPG_Projectile* RequestProjectile(TSubclassOf<ARPG_Projectile> ActorClass, FVector Velocity, FVector Location, FRotator Rotation);
+
+	UFUNCTION(BlueprintCallable, Category = "RPG Gameplay Ability | Actor Spawning")
+	ARPG_Projectile* RequestProjectileFromSocketLocation(TSubclassOf<ARPG_Projectile> ActorClass, FVector Velocity, FName SocketName, FRotator Rotation);
+
+private:
+
+	UFUNCTION()
+	ARPG_Projectile* RequestProjectile_Internal(const TSubclassOf<ARPG_Projectile>& ActorClass, const FVector& Velocity, const FVector& Location, const FRotator& Rotation) const;
+
+protected:
+
 
 	UFUNCTION(BlueprintPure, Category = "RPG Gameplay Ability")
 	ARPG_Character* GetRPGCharacter() const;

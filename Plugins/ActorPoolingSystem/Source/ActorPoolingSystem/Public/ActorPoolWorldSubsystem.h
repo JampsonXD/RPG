@@ -57,6 +57,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Actor Pool World Subsystem")
 	void SetupActorPoolDefaults();
 
+	
+	template<class T>
+	T* RequestActorFromPool(TSubclassOf<AActor> ActorClass, const FActorPopData& PopData)
+	{
+		return Cast<T>(RequestActorFromPool(ActorClass, PopData));
+	}
+
 	UFUNCTION(BlueprintCallable, Category = "Actor Pool World Subsystem")
 	AActor* RequestActorFromPool(TSubclassOf<AActor> ActorClass, const FActorPopData& PopData);
 

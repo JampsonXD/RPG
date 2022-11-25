@@ -124,4 +124,6 @@ struct FActorPool
 
 	int Num() const;
 
+	bool ContainsActor(AActor* Actor) const;
+
 };

@@ -194,6 +194,10 @@
 		{
 			"Name": "ActorPoolingSystem",
 			"Enabled": true
+		},
+		{
+			"Name": "PoseSearch",
+			"Enabled": true
 		}
 	]
 }

@@ -37,3 +37,8 @@ int FActorPool::Num() const
 {
 	return Pool.Num();
 }
+
+bool FActorPool::ContainsActor(AActor* Actor) const
+{
+	return Pool.Contains(Actor);
+}

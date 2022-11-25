@@ -4,6 +4,7 @@
 #include "GAS/RPG_GameplayAbility.h"
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystemComponent.h"
+#include "ActorPoolWorldSubsystem.h"
 #include "RPG_Character.h"
 #include "Camera/CameraComponent.h"
 #include "GAS/RPG_AbilitySystemComponent.h"
@@ -149,6 +150,50 @@ void URPG_GameplayAbility::RemoveCameraEffectFromOwner(UParticleSystemComponent*
 	}
 
 	ParticleSystemComponent->DestroyComponent();
+}
+
+ARPG_Projectile* URPG_GameplayAbility::RequestProjectile(TSubclassOf<ARPG_Projectile> ActorClass, FVector Velocity,
+	FVector Location, FRotator Rotation)
+{
+	return RequestProjectile_Internal(ActorClass, Velocity, Location, Rotation);
+}
+
+ARPG_Projectile* URPG_GameplayAbility::RequestProjectileFromSocketLocation(TSubclassOf<ARPG_Projectile> ActorClass,
+	FVector Velocity, FName SocketName, FRotator Rotation)
+{
+	const FGameplayAbilityActorInfo ActorInfo = GetActorInfo();
+	if(ActorInfo.SkeletalMeshComponent.IsValid())
+	{
+		const USkeletalMeshComponent* SkeletalMeshComponent = ActorInfo.SkeletalMeshComponent.Get();
+		return RequestProjectile_Internal(ActorClass, Velocity, SkeletalMeshComponent->GetSocketLocation(SocketName), Rotation);
+	}
+
+	return nullptr;
+}
+
+ARPG_Projectile* URPG_GameplayAbility::RequestProjectile_Internal(const TSubclassOf<ARPG_Projectile>& ActorClass,
+	const FVector& Velocity, const FVector& Location, const FRotator& Rotation) const
+{
+	if (!ActorClass)
+	{
+		return nullptr;
+	}
+
+	if (UActorPoolWorldSubsystem* PoolingSystem = UActorPoolWorldSubsystem::GetActorPoolWorldSubsystem(this))
+	{
+		FActorPopData PopData;
+		PopData.Owner = GetAvatarActorFromActorInfo();
+		PopData.Velocity = Velocity;
+		PopData.Rotation = Rotation;
+		PopData.Location = Location;
+		PopData.Magnitude = -1.f;
+		PopData.OptionalObject = GetAbilitySystemComponentFromActorInfo();
+		PopData.OptionalObject2 = this;
+
+		return PoolingSystem->RequestActorFromPool<ARPG_Projectile>(ActorClass, PopData);
+	}
+
+	return nullptr;
 }
 
 ARPG_Character* URPG_GameplayAbility::GetRPGCharacter() const

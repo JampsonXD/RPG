@@ -102,6 +102,13 @@ bool UActorPoolWorldSubsystem::AddActorToPool(AActor* Actor)
 
 	if (FActorPool* Pool = PoolMap.Find(Actor->GetClass()))
 	{
+		// Make sure our actor isn't already contained in the pool
+		if(Pool->ContainsActor(Actor))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Trying to add actor %s that is already inside of pool!"), *Actor->GetName())
+			return false;
+		}
+		
 		// Make sure our pool is able to grow before trying to add the actor
 		if(!Pool->CanGrow())
 		{
@@ -252,6 +259,14 @@ void UActorPoolWorldSubsystem::OnActorLeftPool(AActor* Actor, const FActorPopDat
 	Actor->SetActorHiddenInGame(false);
 
 	IPooledActorInterface::Execute_OnPoolLeft(Actor, PopData);
+	
+	// Iterate over all actor components that implement pooled actor interface for initial setup
+	TArray<UActorComponent*> ActorPooledInterfaceComponents = Actor->GetComponentsByInterface(UPooledActorInterface::StaticClass());
+	for(int i = 0; i < ActorPooledInterfaceComponents.Num(); i++)
+	{
+		UActorComponent* ActorComponent = ActorPooledInterfaceComponents[i];
+		IPooledActorInterface::Execute_OnPoolLeft(ActorComponent, PopData);
+	}
 
 	// Enable collision after calling everything else, that way we won't call overlap events until setup is complete
 	Actor->SetActorEnableCollision(true);
@@ -260,6 +275,14 @@ void UActorPoolWorldSubsystem::OnActorLeftPool(AActor* Actor, const FActorPopDat
 void UActorPoolWorldSubsystem::OnActorEnteredPool(AActor* Actor) const
 {
 	IPooledActorInterface::Execute_OnPoolEntered(Actor);
+
+	// Iterate over all actor components that implement pooled actor interface for de-initialization
+	TArray<UActorComponent*> ActorPooledInterfaceComponents = Actor->GetComponentsByInterface(UPooledActorInterface::StaticClass());
+	for(int i = 0; i < ActorPooledInterfaceComponents.Num(); i++)
+	{
+		UActorComponent* ActorComponent = ActorPooledInterfaceComponents[i];
+		IPooledActorInterface::Execute_OnPoolEntered(ActorComponent);
+	}
 
 	/* Interface functions are called before doing pool optimizations,
 	 * this way if the actor still needed access to things such as the end location for the interface functions, it still has relevant data
