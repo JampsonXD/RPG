@@ -65,11 +65,21 @@ void UEC_SuperDamage::Execute_Implementation(const FGameplayEffectCustomExecutio
 	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(DamageStatics().DamageProperty, EGameplayModOp::Additive, PostMitigationDamage));
 
 	ARPG_PlayerController* SourceController = SourceActor ? Cast<ARPG_PlayerController>(SourceActor->GetInstigatorController()) : nullptr;
-	const FHitResult* HitResult = Spec.GetContext().GetHitResult();
 
 	if(SourceController && TargetActor)
 	{
-		const FVector DamageLocation = HitResult ? HitResult->ImpactPoint : TargetActor->GetActorLocation();
+		const FHitResult* HitResult = Spec.GetContext().GetHitResult();
+		FVector DamageLocation;
+		
+		if(HitResult)
+		{
+			DamageLocation = HitResult->ImpactPoint + (HitResult->ImpactNormal * 100.f);
+		}
+		else
+		{
+			DamageLocation = TargetActor->GetActorLocation();
+		}
+		
 		const FDamagePopupData PopupData = FDamagePopupData(DamageTypeData.DamageColor, PostMitigationDamage, false, DamageLocation);
 		SourceController->AddPendingDamagePopup(PopupData);
 	}

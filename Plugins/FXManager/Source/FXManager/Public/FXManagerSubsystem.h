@@ -61,6 +61,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "FX Manager")
 	void StopActivePack(const FActiveEffectPackHandle& Handle);
 
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "FX MAnager")
+	void StopActivePacks(const TArray<FActiveEffectPackHandle>& Handles);
+
 private:
 
 	UFXSystemComponent* SpawnVFXDataAtLocation(const FVFXData VFXData, const AActor* SourceActor, const FTransform& Transform) const;

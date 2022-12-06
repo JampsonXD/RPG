@@ -10,6 +10,7 @@
 /**
  * 
  */
+
 UCLASS()
 class ACTORPOOLINGSYSTEM_API UActorPoolWorldSubsystem : public UWorldSubsystem
 {
@@ -56,7 +57,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Actor Pool World Subsystem")
 	void SetupActorPoolDefaults();
-
 	
 	template<class T>
 	T* RequestActorFromPool(TSubclassOf<AActor> ActorClass, const FActorPopData& PopData)

@@ -58,6 +58,14 @@ ARPG_PlayerCharacter::ARPG_PlayerCharacter(const FObjectInitializer& ObjectIniti
 	InteractionSystemComponent = CreateDefaultSubobject<UInteractionSystemComponent>(TEXT("Interaction System Component"));
 }
 
+void ARPG_PlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// Try equipping our first weapon if one was added during possession
+	EquipNextWeapon();
+}
+
 FInteractionTracePoints ARPG_PlayerCharacter::GetTracePoints() const
 {
 	FInteractionTracePoints TracePoints;

@@ -66,14 +66,14 @@ void FAbilitySetActiveHandle::RemoveAttributeSets()
 FAbilitySetActiveHandle UAbilitySet::AddAbilitySet(UAbilitySystemComponent* AbilitySystemComponent,
                                                    UObject* SourceObject) const
 {
-	if(!AbilitySystemComponent->IsOwnerActorAuthoritative())
-	{
-		return FAbilitySetActiveHandle();
-	}
-
 	if(!AbilitySystemComponent)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Ability System Component passed into object %s is invalid!"), *GetNameSafe(this));
+		return FAbilitySetActiveHandle();
+	}
+
+	if(!AbilitySystemComponent->IsOwnerActorAuthoritative())
+	{
 		return FAbilitySetActiveHandle();
 	}
 

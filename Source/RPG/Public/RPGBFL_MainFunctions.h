@@ -19,6 +19,28 @@ class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 	
 	public:
 
+
+	/**
+	 * Applies a Gameplay Effect using TargetData using the passed in AbilitySystemComponent as the source.
+	 * @param AbilitySystemComponent : Source Ability System Component
+	 * @param GameplayEffect : Gameplay Effect Class we are applying to our target
+	 * @param TargetData : Target Data Handle that determines what targets to apply the effect to
+	 * @param AbilityLevel : The level of the gameplay effect we are applying
+	 * @param Stacks : The amount of stacks of the gameplay effect we are applying to targets
+	 * @return FGameplayEffectHandle : Array of Handles to applied active gameplay effects
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ability System Component")
+	static TArray<FActiveGameplayEffectHandle> ApplyGameplayEffectToTargetWithTargetData(UAbilitySystemComponent* AbilitySystemComponent,
+		TSubclassOf<UGameplayEffect> GameplayEffect,
+		FGameplayAbilityTargetDataHandle TargetData,
+		int AbilityLevel = 1, int Stacks = 1);
+
+	UFUNCTION(BlueprintCallable, Category = "Ability System Component")
+	static UObject* GetCurrentSourceObjectFromSpec(const FGameplayEffectSpec& Spec);
+
+	UFUNCTION(BlueprintCallable, Category = "Target Data")
+	static FGameplayEffectContainerSpec AddTargetDataToContainerSpec(UPARAM(Ref) FGameplayEffectContainerSpec& ContainerSpec, FGameplayAbilityTargetDataHandle TargetDataHandle);
+
 	/**
 	 * Takes in two arrays, adding any unique items from the target array to the secondary array
 	 * @param TargetArray : Array we are adding unique items from

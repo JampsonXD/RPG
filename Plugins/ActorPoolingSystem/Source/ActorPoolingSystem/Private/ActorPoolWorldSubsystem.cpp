@@ -199,7 +199,7 @@ AActor* UActorPoolWorldSubsystem::ForceSpawnActor(TSubclassOf<AActor> ActorClass
 	{
 		return nullptr;
 	}
-
+	
 	AActor* NewActor = World->SpawnActor(ActorClass, &PoolingLocation);
 	return NewActor;
 }

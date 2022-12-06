@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FXTypes.h"
 #include "GAS_Types.h"
 #include "Abilities/GameplayAbility.h"
 #include "Actors/RPG_Projectile.h"
@@ -57,18 +58,15 @@ protected:
 		int AbilityLevel = -1);
 
 	/** Spawns and attaches a Camera Effect to our players Camera Component
-	 * @param EmitterTemplate : Particle System we want to add to our camera
+	 * @param EffectPack : Effect Pack that contains the camera effect, can also hold other effects
 	 * @param Location : Relative Location to our camera
 	 * @param Rotation : Relative Rotation to our camera
 	 * @param Scale : Scale/Size of our emitter
-	 * @return Pointer to our spawned particle system
+	 * @return Handle to the active effect pack that was creatde
 	 **/
 	UFUNCTION(BlueprintCallable, Category = "RPG Gameplay Ability | Camera")
-	UParticleSystemComponent* AddCameraEffectToOwner(UParticleSystem* EmitterTemplate,
+	FActiveEffectPackHandle AddCameraEffectToOwner(const FEffectPack& EffectPack,
 	FTransform Transform, bool bRemoveOnAbilityEnd = false);
-
-	UFUNCTION(BlueprintCallable, Category = "RPG Gameplay Ability | Camera")
-	void RemoveCameraEffectFromOwner(UParticleSystemComponent* ParticleSystemComponent);
 
 	UFUNCTION(BlueprintCallable, Category = "RPG Gameplay Ability | Actor Spawning")
 	ARPG_Projectile* RequestProjectile(TSubclassOf<ARPG_Projectile> ActorClass, FVector Velocity, FVector Location, FRotator Rotation);
@@ -104,8 +102,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Ability Defaults")
 	bool bActivateOnGranted;
 
-	// Array of currently activated camera effects
-	TArray<UParticleSystemComponent*> CameraEffects;
+	// Array of handles to currently activated camera effects
+	TArray<FActiveEffectPackHandle> CameraEffectActiveHandles;
 
 	virtual void OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 

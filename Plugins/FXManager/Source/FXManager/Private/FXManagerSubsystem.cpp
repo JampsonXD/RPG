@@ -157,6 +157,31 @@ void UFXManagerSubsystem::StopActivePack(const FActiveEffectPackHandle& Handle)
 	}
 }
 
+void UFXManagerSubsystem::StopActivePacks(const TArray<FActiveEffectPackHandle>& Handles)
+{
+	/* Cache all Handle Id's using a Set, this keeps us from having to iterate over our active effect pack
+	 * array for each handle, O(n) instead of O(n^2) */
+	TSet<int> PackIdsToRemove;
+
+	// Iterate through all our active effect packs and cache their Id's
+	for(int i = 0; i < Handles.Num(); ++i)
+	{
+		const FActiveEffectPackHandle& Handle = Handles[i];
+		PackIdsToRemove.Add(Handle.GetId());
+	}
+
+	// Check if the handles Id was in our cached set, invalidate the pack, and remove the current index
+	for(auto Iterator = ActiveEffectPacks.CreateIterator(); Iterator; ++Iterator)
+	{
+		FActiveEffectPack& Pack = ActiveEffectPacks[Iterator.GetIndex()];
+		if(PackIdsToRemove.Contains(Pack.Id))
+		{
+			Pack.Invalidate();
+			Iterator.RemoveCurrent();
+		}
+	}
+}
+
 UFXSystemComponent* UFXManagerSubsystem::SpawnVFXDataAtLocation(const FVFXData VFXData, const AActor* SourceActor, const FTransform& Transform) const
 {
 
@@ -313,7 +338,6 @@ FGameplayTagContainer UFXManagerSubsystem::GetActorTags(const AActor* Actor) con
 	if(const IGameplayTagAssetInterface* Interface = Cast<IGameplayTagAssetInterface>(Actor))
 	{
 		Interface->GetOwnedGameplayTags(Container);
-		return Container;
 	}
 
 	return Container;

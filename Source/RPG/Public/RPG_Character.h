@@ -88,6 +88,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure , Category = "Attributes | Character Level")
 	float GetCharacterLevel();
 
+	UFUNCTION(BlueprintCallable, Category = "Ability Set")
+	void AddDefaultAbilitySet();
+
+	UFUNCTION(BlueprintCallable, Category = "Ability Set")
+	void RemoveDefaultAbilitySet();
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Item Attach")
 	void AttachItem(AActor* Actor, const FEquipData& EquipData);
 };

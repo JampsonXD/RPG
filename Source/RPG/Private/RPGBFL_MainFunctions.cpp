@@ -8,6 +8,59 @@
 #include "ActorPoolWorldSubsystem.h"
 #include "RPG_GameSingleton.h"
 
+TArray<FActiveGameplayEffectHandle> URPGBFL_MainFunctions::ApplyGameplayEffectToTargetWithTargetData(
+	UAbilitySystemComponent* AbilitySystemComponent, TSubclassOf<UGameplayEffect> GameplayEffect,
+	FGameplayAbilityTargetDataHandle TargetData, int AbilityLevel, int Stacks)
+{
+	TArray<FActiveGameplayEffectHandle> Handles;
+	if(!AbilitySystemComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Invalid Ability System Component passed into URPGBFL_MainFunctions::ApplyGameplayEffectToTargetWithTargetData"));
+		return Handles;
+	}
+
+	if(!GameplayEffect)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Invalid Gameplay Effect Class passed into URPGBFL_MainFunctions::ApplyGameplayEffectToTargetWithTargetData"));
+		return Handles;
+	}
+
+	if(!AbilitySystemComponent->IsOwnerActorAuthoritative())
+	{
+		return Handles;
+	}
+	
+	for (TSharedPtr<FGameplayAbilityTargetData> Data : TargetData.Data)
+	{
+		if (Data.IsValid())
+		{
+			const FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+			FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(GameplayEffect, AbilityLevel, Context);
+			SpecHandle.Data->StackCount = Stacks;
+			Handles = Data->ApplyGameplayEffectSpec(*SpecHandle.Data.Get());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("URPGBFL_MainFunctions::ApplyGameplayEffectToTargetWithTargetData invalid target data passed in."));
+		}
+	}
+
+	return Handles;
+}
+
+UObject* URPGBFL_MainFunctions::GetCurrentSourceObjectFromSpec(const FGameplayEffectSpec& Spec)
+{
+	return Spec.GetContext().GetSourceObject();
+}
+
+FGameplayEffectContainerSpec URPGBFL_MainFunctions::AddTargetDataToContainerSpec(
+	FGameplayEffectContainerSpec& ContainerSpec, FGameplayAbilityTargetDataHandle TargetDataHandle)
+{
+	FGameplayEffectContainerSpec Container = ContainerSpec;
+	Container.TargetData.Append(TargetDataHandle);
+	return Container;
+}
+
 int URPGBFL_MainFunctions::AppendUnique(const TArray<UProperty*>& TargetArray, UPARAM(ref)TArray<UProperty*>& OutArray)
 {
 	int UniqueCount = 0;

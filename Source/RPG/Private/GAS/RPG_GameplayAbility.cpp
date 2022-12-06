@@ -5,6 +5,8 @@
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystemComponent.h"
 #include "ActorPoolWorldSubsystem.h"
+#include "FXManagerSubsystem.h"
+#include "FXTypes.h"
 #include "RPG_Character.h"
 #include "Camera/CameraComponent.h"
 #include "GAS/RPG_AbilitySystemComponent.h"
@@ -113,43 +115,36 @@ bool URPG_GameplayAbility::MakeAndApplyGameplayEffectContainerSpecFromEffectMap(
 	return false;
 }
 
-UParticleSystemComponent* URPG_GameplayAbility::AddCameraEffectToOwner(UParticleSystem* EmitterTemplate,
+FActiveEffectPackHandle URPG_GameplayAbility::AddCameraEffectToOwner(const FEffectPack& EffectPack,
 	FTransform Transform, bool bRemoveOnAbilityEnd)
 {
-	// Only spawn and attach our camera effect to the owner if we have a emitter template
-	if(!EmitterTemplate)
+	FActiveEffectPackHandle Handle;
+	
+	// Only spawn and attach our camera effect to the owner if we have a valid effect pack
+	if(!EffectPack.IsValid())
 	{
-		return nullptr;
+		return Handle;
 	}
 
-	// Try getting our Camera Component, returns the first camera component in our component list
-	AActor* AvatarActor = GetAvatarActorFromActorInfo();
 	
+	AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	// Try getting our Camera Component, returns the first camera component in our component list
 	if(UCameraComponent* CameraComponent = AvatarActor ? Cast<UCameraComponent>(AvatarActor->GetComponentByClass(UCameraComponent::StaticClass())) : nullptr)
 	{
-		UParticleSystemComponent* Particle = UGameplayStatics::SpawnEmitterAttached(EmitterTemplate, CameraComponent, FName(TEXT("None")),
-			Transform.GetLocation(), Transform.Rotator(), Transform.GetScale3D(), EAttachLocation::KeepRelativeOffset);
-
-		// Add to our array of camera effects if we need to remove on end
-		if(bRemoveOnAbilityEnd)
+		// Get the FX Manager and Play an Attached Effect on our Camera Component
+		if(UFXManagerSubsystem* FXManager = UFXManagerSubsystem::GetFXManager())
 		{
-			CameraEffects.Add(Particle);
+			Handle = FXManager->PlayEffectAttached(AvatarActor, nullptr, CameraComponent, EffectPack,
+				bRemoveOnAbilityEnd ? EEffectActivationType::Active : EEffectActivationType::Instant);
+			
+			if(bRemoveOnAbilityEnd)
+			{
+				CameraEffectActiveHandles.Add(Handle);
+			}
 		}
-
-		return Particle;
 	}
 
-	return nullptr;
-}
-
-void URPG_GameplayAbility::RemoveCameraEffectFromOwner(UParticleSystemComponent* ParticleSystemComponent)
-{
-	if(!ParticleSystemComponent)
-	{
-		return;
-	}
-
-	ParticleSystemComponent->DestroyComponent();
+	return Handle;
 }
 
 ARPG_Projectile* URPG_GameplayAbility::RequestProjectile(TSubclassOf<ARPG_Projectile> ActorClass, FVector Velocity,
@@ -172,7 +167,7 @@ ARPG_Projectile* URPG_GameplayAbility::RequestProjectileFromSocketLocation(TSubc
 }
 
 ARPG_Projectile* URPG_GameplayAbility::RequestProjectile_Internal(const TSubclassOf<ARPG_Projectile>& ActorClass,
-	const FVector& Velocity, const FVector& Location, const FRotator& Rotation) const
+                                                                  const FVector& Velocity, const FVector& Location, const FRotator& Rotation) const
 {
 	if (!ActorClass)
 	{
@@ -181,14 +176,17 @@ ARPG_Projectile* URPG_GameplayAbility::RequestProjectile_Internal(const TSubclas
 
 	if (UActorPoolWorldSubsystem* PoolingSystem = UActorPoolWorldSubsystem::GetActorPoolWorldSubsystem(this))
 	{
+		APawn* PawnAvatarActor = Cast<APawn>(GetAvatarActorFromActorInfo());
+		
 		FActorPopData PopData;
-		PopData.Owner = GetAvatarActorFromActorInfo();
+		PopData.Owner = PawnAvatarActor;
+		PopData.Instigator = PawnAvatarActor;
 		PopData.Velocity = Velocity;
 		PopData.Rotation = Rotation;
 		PopData.Location = Location;
 		PopData.Magnitude = -1.f;
 		PopData.OptionalObject = GetAbilitySystemComponentFromActorInfo();
-		PopData.OptionalObject2 = this;
+		PopData.OptionalObject2 = GetCurrentSourceObject();
 
 		return PoolingSystem->RequestActorFromPool<ARPG_Projectile>(ActorClass, PopData);
 	}
@@ -231,12 +229,14 @@ void URPG_GameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
 	// Remove any camera effects waiting for ability end
-	if(!CameraEffects.IsEmpty())
+	if(!CameraEffectActiveHandles.IsEmpty())
 	{
-		for(UParticleSystemComponent*& ParticleSystemComponent : CameraEffects)
+		if(UFXManagerSubsystem* FXManager = UFXManagerSubsystem::GetFXManager())
 		{
-			ParticleSystemComponent->DestroyComponent();
+			FXManager->StopActivePacks(CameraEffectActiveHandles);
 		}
+
+		CameraEffectActiveHandles.Empty();
 	}
 	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);

@@ -5,8 +5,32 @@
 #include "RPG_GameSingleton.h"
 #include "GAS/RPG_AttributeSet.h"
 
+TArray<FActiveGameplayEffectHandle> URPG_AbilitySystemComponent::ApplyGameplayEffectContainerSpec(
+	const FGameplayEffectContainerSpec& ContainerSpec)
+{
+	TArray<FActiveGameplayEffectHandle> ActiveGameplayEffectHandles;
+	for(const FGameplayEffectSpecHandle& EffectSpecHandle : ContainerSpec.TargetGameplayEffectSpecs)
+	{
+		// Make sure our effect spec is valid
+		if(!EffectSpecHandle.Data.IsValid())
+		{
+			continue;
+		}
+		
+		for(const TSharedPtr<FGameplayAbilityTargetData>& Data : ContainerSpec.TargetData.Data)
+		{
+			if(Data.IsValid())
+			{
+				ActiveGameplayEffectHandles.Append(Data->ApplyGameplayEffectSpec(*EffectSpecHandle.Data.Get()));
+			}
+		}
+	}
+	
+	return ActiveGameplayEffectHandles;
+}
+
 FAbilitySetActiveHandle URPG_AbilitySystemComponent::AddAbilitySet(UAbilitySet* AbilitySet,
-	UObject* SourceObject)
+                                                                   UObject* SourceObject)
 {
 	check(AbilitySet);
 	return AbilitySet->AddAbilitySet(this, SourceObject);

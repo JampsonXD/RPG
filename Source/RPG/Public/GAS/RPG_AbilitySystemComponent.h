@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySet.h"
 #include "AbilitySystemComponent.h"
+#include "GAS_Types.h"
 #include "RPG_AbilitySystemComponent.generated.h"
 
 /**
@@ -20,6 +21,9 @@ class RPG_API URPG_AbilitySystemComponent : public UAbilitySystemComponent
 
 public:
 
+	UFUNCTION(BlueprintCallable, Category = "RPG Ability System Component")
+	TArray<FActiveGameplayEffectHandle> ApplyGameplayEffectContainerSpec(const FGameplayEffectContainerSpec& ContainerSpec);
+	
 	UFUNCTION(BlueprintCallable, Category = "Ability Set")
 	FAbilitySetActiveHandle AddAbilitySet(UAbilitySet* AbilitySet, UObject* SourceObject);
 

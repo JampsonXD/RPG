@@ -76,6 +76,24 @@ float ARPG_Character::GetCharacterLevel()
 	return 1.f;
 }
 
+void ARPG_Character::AddDefaultAbilitySet()
+{
+	// Activate our default Ability Set if its not currently active
+	if(!DefaultAbilitySetHandle.IsActive() && DefaultAbilitySet)
+	{
+		DefaultAbilitySetHandle = AbilitySystemComponent->AddAbilitySet(DefaultAbilitySet, this);
+	}
+}
+
+void ARPG_Character::RemoveDefaultAbilitySet()
+{
+	// Only remove our ability set handle if it is active
+	if(DefaultAbilitySetHandle.IsActive())
+	{
+		DefaultAbilitySetHandle.Remove();
+	}
+}
+
 void ARPG_Character::AttachItem(AActor* Actor, const FEquipData& EquipData)
 {
 	Actor->SetActorRelativeTransform(EquipData.RelativeTransform);
@@ -101,11 +119,8 @@ void ARPG_Character::PossessedBy(AController* NewController)
 		// Set our Attribute Pointers
 		InitAttributeSets(PS);
 
-		// Activate our default Ability Set if its not currently active
-		if(!DefaultAbilitySetHandle.IsActive() && DefaultAbilitySet)
-		{
-			DefaultAbilitySetHandle = AbilitySystemComponent->AddAbilitySet(DefaultAbilitySet, this);
-		}
+		// Add our Default Ability Set
+		AddDefaultAbilitySet();
 
 		// Initiate our Inventory System
 		InventorySystemComponent = PS->GetInventorySystemComponent();
