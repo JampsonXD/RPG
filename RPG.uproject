@@ -15,6 +15,11 @@
 				"UMG",
 				"InventorySystem"
 			]
+		},
+		{
+			"Name": "RPGLoadingScreen",
+			"Type": "ClientOnly",
+			"LoadingPhase": "PreLoadingScreen"
 		}
 	],
 	"Plugins": [

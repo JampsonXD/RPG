@@ -9,6 +9,11 @@ TArray<FActiveGameplayEffectHandle> URPG_AbilitySystemComponent::ApplyGameplayEf
 	const FGameplayEffectContainerSpec& ContainerSpec)
 {
 	TArray<FActiveGameplayEffectHandle> ActiveGameplayEffectHandles;
+	if(!IsOwnerActorAuthoritative())
+	{
+		return ActiveGameplayEffectHandles;
+	}
+	
 	for(const FGameplayEffectSpecHandle& EffectSpecHandle : ContainerSpec.TargetGameplayEffectSpecs)
 	{
 		// Make sure our effect spec is valid

@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "ActorPoolWorldSubsystem.h"
+#include "RPGLoadingScreenModule.h"
 #include "RPG_GameSingleton.h"
 
 TArray<FActiveGameplayEffectHandle> URPGBFL_MainFunctions::ApplyGameplayEffectToTargetWithTargetData(
@@ -151,6 +152,18 @@ void URPGBFL_MainFunctions::AddForceFeedbackOnController(AController* Controller
 		Params.bLooping = bIsLooping;
 		PlayerController->ClientPlayForceFeedback(ForceFeedbackEffect, Params);
 	}
+}
+
+void URPGBFL_MainFunctions::PlayRPGLoadingScreen(bool bPlayUntilStopped, float Playtime)
+{
+	IRPGLoadingScreenModule& Module = IRPGLoadingScreenModule::Get();
+	Module.StartInGameLoadingScreen(bPlayUntilStopped, Playtime);
+}
+
+void URPGBFL_MainFunctions::StopRPGLoadingScreen()
+{
+	IRPGLoadingScreenModule& Module = IRPGLoadingScreenModule::Get();
+	Module.StopInGameLoadingScreen();
 }
 
 void URPGBFL_MainFunctions::AddLooseGameplayTagsToActor(AActor* TargetActor, const FGameplayTagContainer Tags)

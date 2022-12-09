@@ -12,6 +12,7 @@
 /**
  * 
  */
+
 UCLASS()
 class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 {
@@ -77,6 +78,12 @@ class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, Category = "RPG Effects")
 	static void AddForceFeedbackOnController(AController* Controller, UForceFeedbackEffect* ForceFeedbackEffect, bool bIsLooping = false);
 
+	UFUNCTION(BlueprintCallable, Category = "RPG Loading Screen")
+	static void PlayRPGLoadingScreen(bool bPlayUntilStopped, float Playtime);
+
+	UFUNCTION(BlueprintCallable, Category = "RPG Loading Screen")
+	static void StopRPGLoadingScreen();
+
 	UFUNCTION(BlueprintCallable, Category = "RPG GAS")
 	static void AddLooseGameplayTagsToActor(AActor* TargetActor, const FGameplayTagContainer Tags);
 
@@ -111,5 +118,64 @@ class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 		static FGameplayTag GetJumpingTag()
 	{
 		return FRPG_TagLibrary::Get().JumpingTag();
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "RPG Math")
+	static void SortFloatsByValue(UPARAM(ref) TArray<float>& FloatArray)
+	{
+		const auto lambda = [](float ParamOne, float ParamTwo)
+		{
+			return ParamOne >= ParamTwo;
+		};
+		
+		QuickSort<float>(FloatArray, 0, FloatArray.Num() - 1, lambda);
+	}
+
+	template<class A, class B>
+	static TArray<TPair<A,B>> SortMap(const TMap<A,B>& UnsortedMap, TFunction<bool(TPair<A,B> ParamOne, TPair<A,B> ParamTwo)> Predicate)
+	{
+		TArray<TPair<A,B>> Pairs;
+		for(const TPair<A,B>& Pair : UnsortedMap)
+		{
+			Pairs.Add(Pair);
+		}
+
+		QuickSort(Pairs, 0, Pairs.Num() - 1);
+		return Pairs;
+	}
+
+	template<class T>
+	static void QuickSort(TArray<T>& Array, int LowIndex, int HighIndex, const TFunctionRef<bool(T ParamOne, T ParamTwo)>& Predicate)
+	{
+		if(LowIndex >= HighIndex)
+		{
+			return;
+		}
+
+		T Pivot = Array[HighIndex];
+		
+		int leftPointer = LowIndex;
+		int rightPointer = HighIndex;
+		
+
+		while(leftPointer < rightPointer)
+		{
+			while(Predicate(Pivot, Array[leftPointer]) && leftPointer < rightPointer)
+			{
+				++leftPointer;
+			}
+
+			while(Predicate(Array[rightPointer], Pivot) && leftPointer < rightPointer)
+			{
+				--rightPointer;
+			}
+			
+			Array.Swap(leftPointer, rightPointer);
+		}
+
+		Array.Swap(leftPointer, HighIndex);
+		
+		QuickSort<T>(Array, LowIndex, leftPointer - 1, Predicate);
+		QuickSort<T>(Array, leftPointer + 1, HighIndex, Predicate);
 	}
 };
