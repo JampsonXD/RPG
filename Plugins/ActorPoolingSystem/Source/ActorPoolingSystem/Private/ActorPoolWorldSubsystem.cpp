@@ -3,6 +3,7 @@
 
 #include "ActorPoolWorldSubsystem.h"
 #include "PooledActorInterface.h"
+#include "Core/ActorPoolingDeveloperSettings.h"
 
 
 const TSoftObjectPtr<UDataTable> UActorPoolWorldSubsystem::DefaultActorPoolDataTable = 
@@ -36,20 +37,52 @@ UActorPoolWorldSubsystem* UActorPoolWorldSubsystem::GetActorPoolWorldSubsystem(c
 
 void UActorPoolWorldSubsystem::SetupActorPoolDefaults()
 {
+	// Get all of our soft object paths associated with our developer settings for default actor pools
+	const TArray<TSoftObjectPtr<UDataTable>>& ActorPoolPaths =
+		UActorPoolingDeveloperSettings::StaticClass()->GetDefaultObject<UActorPoolingDeveloperSettings>()->DefaultActorPoolPaths;
 
-	/* If we are pointing to a valid data table, create actor pools based on row information.
-	 * Create Pool handles checking if classes are valid and handling pool size errors.
-	 */
-	if (const UDataTable* DefaultActorPoolData = DefaultActorPoolDataTable.LoadSynchronous())
+
+	/* For each path, load the object it is pointing to,
+	 * get all rows that are a default actor pool data and create pools with the found rows */
+	for(const TSoftObjectPtr<UDataTable>& Path: ActorPoolPaths)
 	{
-		TArray<FDefaultActorPoolData*> PoolData;
-		DefaultActorPoolData->GetAllRows("", PoolData);
-
-		for (int i = 0; i < PoolData.Num(); i++)
+		if(const UDataTable* Table = Path.LoadSynchronous())
 		{
-			if (const FDefaultActorPoolData* Data = PoolData[i])
+			TArray<FDefaultActorPoolData*> PoolData;
+			Table->GetAllRows("", PoolData);
+
+			for(int i = 0; i < PoolData.Num(); ++i)
 			{
-				CreatePool(Data->ActorClass, Data->MinimumPoolSize, Data->MaximumPoolSize, Data->PoolSize);
+				if(const FDefaultActorPoolData* Data = PoolData[i])
+				{
+					CreatePool(Data->ActorClass, Data->MinimumPoolSize, Data->MaximumPoolSize, Data->PoolSize);
+				}
+			}
+		}
+	}
+
+	// Get all of our soft object paths associated with our developer settings for our actor pop settings
+	const TArray<TSoftObjectPtr<UDataTable>>& SettingsPaths =
+		UActorPoolingDeveloperSettings::StaticClass()->GetDefaultObject<UActorPoolingDeveloperSettings>()->ActorPoolSettingsPaths;
+
+	/* For each of our found Actor Path Settings Tables, add the data to a map,
+	 * mapping actor classes to the settings they will be configured to use when popping
+	 * the actor out of the actor pool
+	 */
+	for(const TSoftObjectPtr<UDataTable>& Path : SettingsPaths)
+	{
+		if(const UDataTable* Table = Path.LoadSynchronous())
+		{
+			TArray<FPooledActorSettings*> SettingsData;
+			Table->GetAllRows("", SettingsData);
+
+			for(int i = 0; i < SettingsData.Num(); ++i)
+			{
+				// Find or Add the actor settings to our map of settings, overwrites actor settings that may have been set previously
+				if(const FPooledActorSettings* ActorSettings = SettingsData[i])
+				{
+					ActorSettingsMap.FindOrAdd(ActorSettings->PooledActorClass, *ActorSettings);
+				}
 			}
 		}
 	}
@@ -100,8 +133,9 @@ bool UActorPoolWorldSubsystem::AddActorToPool(AActor* Actor)
 		CreatePool(Actor->GetClass(), DefaultMinimumPoolSize, DefaultMaximumPoolSize, DefaultPoolSize);
 	}
 
-	if (FActorPool* Pool = PoolMap.Find(Actor->GetClass()))
+	if (const TSharedPtr<FActorPool>* PoolPointer = PoolMap.Find(Actor->GetClass()))
 	{
+		FActorPool* Pool = PoolPointer->Get();
 		// Make sure our actor isn't already contained in the pool
 		if(Pool->ContainsActor(Actor))
 		{
@@ -143,9 +177,10 @@ bool UActorPoolWorldSubsystem::CreatePool(TSubclassOf<AActor> ActorClass, int Mi
 	Amount = FMath::Max(MinimumPoolSize, Amount);
 	MaximumPoolSize = FMath::Max(Amount, MaximumPoolSize);
 
-	FActorPool* ActorPool = new FActorPool(MinimumPoolSize, MaximumPoolSize);
+	// Create a shared pointer to a new ActorPool, fill that pool with the specified amount of actors, and add it to our map so we can keep track of its lifetime
+	const TSharedPtr<FActorPool> ActorPool = MakeShared<FActorPool>(MinimumPoolSize, MaximumPoolSize);
 	FillPool(ActorClass, *ActorPool, Amount);
-	PoolMap.Add(ActorClass, *ActorPool);
+	PoolMap.Add(ActorClass, ActorPool);
 	return true;
 }
 
@@ -158,11 +193,10 @@ bool UActorPoolWorldSubsystem::RemovePool(TSubclassOf<AActor> ActorClass)
 	}
 
 	// Make sure a pool exists for the class
-	if(FActorPool* ActorPool = PoolMap.Find(ActorClass))
+	if(TSharedPtr<FActorPool>* ActorPool = PoolMap.Find(ActorClass))
 	{
-		ReleaseFromPool(*ActorPool, ActorPool->Pool.Num());
+		ReleaseFromPool(*ActorPool->Get(), ActorPool->Get()->Pool.Num());
 		PoolMap.Remove(ActorClass);
-		delete ActorPool;
 		return true;
 	}
 
@@ -177,8 +211,9 @@ bool UActorPoolWorldSubsystem::ModifyPoolMinimumSize(TSubclassOf<AActor> ActorCl
 
 AActor* UActorPoolWorldSubsystem::PopActorOfType(TSubclassOf<AActor> ActorClass, const FActorPopData& PopData)
 {
-	if (FActorPool* Pool = PoolMap.Find(ActorClass))
+	if (TSharedPtr<FActorPool>* PoolPointer = PoolMap.Find(ActorClass))
 	{
+		FActorPool* Pool = PoolPointer->Get();
 		AActor* Actor = Pool->Pop();
 		OnActorLeftPool(Actor, PopData);
 		if (Pool->ShouldGrow())
@@ -230,7 +265,8 @@ void UActorPoolWorldSubsystem::ReleaseFromPool(FActorPool& ActorPool, const int 
 	{
 		if(AActor* Actor = ActorPool.Pop())
 		{
-			if(Actor)
+			// Try destroying our actor if we are pointing to a valid object and it isn't already being destroyed
+			if(Actor && !Actor->IsActorBeingDestroyed())
 			{
 				Actor->Destroy();
 			}
@@ -245,8 +281,11 @@ void UActorPoolWorldSubsystem::ReleaseFromPool(FActorPool& ActorPool, const int 
 
 void UActorPoolWorldSubsystem::OnActorLeftPool(AActor* Actor, const FActorPopData& PopData) const
 {
+	// Will use the found settings for our actors class or use the default settings
+	const FPooledActorSettings Settings = ActorSettingsMap.FindRef(Actor->GetClass());
+	
 	// Turn on replication
-	Actor->SetReplicates(true);
+	Actor->SetReplicates(Settings.ShouldReplicate());
 
 	// Setup Actor based on passed in Pop Data
 	Actor->SetActorLocation(PopData.GetLocation());
@@ -255,8 +294,8 @@ void UActorPoolWorldSubsystem::OnActorLeftPool(AActor* Actor, const FActorPopDat
 	Actor->SetActorRotation(PopData.GetRotator());
 
 	// Performance and pool specific settings turned off when leaving pool
-	Actor->SetActorTickEnabled(true);
-	Actor->SetActorHiddenInGame(false);
+	Actor->SetActorTickEnabled(Settings.ShouldUseTick());
+	Actor->SetActorHiddenInGame(Settings.ShouldHideInGame());
 
 	IPooledActorInterface::Execute_OnPoolLeft(Actor, PopData);
 	
@@ -269,7 +308,7 @@ void UActorPoolWorldSubsystem::OnActorLeftPool(AActor* Actor, const FActorPopDat
 	}
 
 	// Enable collision after calling everything else, that way we won't call overlap events until setup is complete
-	Actor->SetActorEnableCollision(true);
+	Actor->SetActorEnableCollision(Settings.ShouldEnableCollision());
 }
 
 void UActorPoolWorldSubsystem::OnActorEnteredPool(AActor* Actor) const

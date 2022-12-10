@@ -20,9 +20,10 @@ private:
 
 	/* Soft Object Pointer to a Data Table containing default actor pool data that can be used on setup */
 	static const TSoftObjectPtr<UDataTable> DefaultActorPoolDataTable;
+	
+	TMap<UClass*, TSharedPtr<FActorPool>> PoolMap;
 
-	UPROPERTY()
-	TMap<UClass*, FActorPool> PoolMap;
+	TMap<UClass*, FPooledActorSettings> ActorSettingsMap;
 
 protected:
 
