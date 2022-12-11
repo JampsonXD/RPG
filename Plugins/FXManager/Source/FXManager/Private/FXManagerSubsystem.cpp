@@ -69,7 +69,7 @@ FActiveEffectPackHandle UFXManagerSubsystem::PlayEffectAtLocation(AActor* Source
 			continue;
 		}
 
-		ActivePack.AddActiveVFX(SpawnVFXDataAtLocation(VfxData, SourceActor, Transform));
+		ActivePack.AddActiveVFX(SpawnVFXDataAtLocation(VfxData, SourceActor, Transform), VfxData.AccessTag);
 	}
 
 	for(const FSFXData& SfxData : EffectPack.SFXData)
@@ -80,7 +80,7 @@ FActiveEffectPackHandle UFXManagerSubsystem::PlayEffectAtLocation(AActor* Source
 			continue;
 		}
 
-		ActivePack.AddActiveSound(SpawnSFXDataAtLocation(SfxData, SourceActor, Transform));
+		ActivePack.AddActiveSound(SpawnSFXDataAtLocation(SfxData, SourceActor, Transform), SfxData.AccessTag);
 	}
 
 	if(!ActivePack.IsActive())
@@ -120,7 +120,7 @@ FActiveEffectPackHandle UFXManagerSubsystem::PlayEffectAttached(AActor* SourceAc
 			continue;
 		}
 
-		ActivePack.AddActiveVFX(SpawnVFXDataAtComponent(VfxData, SourceActor, AttachComponent));
+		ActivePack.AddActiveVFX(SpawnVFXDataAtComponent(VfxData, SourceActor, AttachComponent), VfxData.AccessTag);
 	}
 
 	for (const FSFXData& SfxData : EffectPack.SFXData)
@@ -131,7 +131,7 @@ FActiveEffectPackHandle UFXManagerSubsystem::PlayEffectAttached(AActor* SourceAc
 			continue;
 		}
 
-		ActivePack.AddActiveSound(SpawnSFXDataAtComponent(SfxData, SourceActor, AttachComponent));
+		ActivePack.AddActiveSound(SpawnSFXDataAtComponent(SfxData, SourceActor, AttachComponent), SfxData.AccessTag);
 	}
 
 	if (!ActivePack.IsActive())
@@ -180,6 +180,24 @@ void UFXManagerSubsystem::StopActivePacks(const TArray<FActiveEffectPackHandle>&
 			Iterator.RemoveCurrent();
 		}
 	}
+}
+
+UFXSystemComponent* UFXManagerSubsystem::GetVfxSystemComponentByTag(const FActiveEffectPackHandle& Handle,
+	FGameplayTag Tag)
+{
+	return Internal_GetVfxSystemComponent(Handle, [Tag](const FActiveEffect<UFXSystemComponent*>& ActiveEffect)
+	{
+		return ActiveEffect.AccessTag == Tag;
+	});
+}
+
+UAudioComponent* UFXManagerSubsystem::GetSfxSystemComponentByTag(const FActiveEffectPackHandle& Handle,
+	FGameplayTag Tag)
+{
+	return Internal_FindSfxSystemComponent(Handle, [Tag](const FActiveEffect<UAudioComponent*>& ActiveEffect)
+	{
+		return ActiveEffect.AccessTag == Tag;
+	});
 }
 
 UFXSystemComponent* UFXManagerSubsystem::SpawnVFXDataAtLocation(const FVFXData VFXData, const AActor* SourceActor, const FTransform& Transform) const
@@ -297,6 +315,12 @@ UAudioComponent* UFXManagerSubsystem::SpawnSFXDataAtComponent(const FSFXData SFX
 
 FActiveEffectPack& UFXManagerSubsystem::GetActivePack(const FActiveEffectPackHandle& Handle)
 {
+	FActiveEffectPack TempPack;
+	if(!Handle.IsValid())
+	{
+		return TempPack;
+	}
+	
 	/* Get our active or instant pack array based on the activation data from our handle */
 	TArray<FActiveEffectPack>& Array = Handle.GetPackType() == EEffectActivationType::Active ? ActiveEffectPacks : InstantEffectPacks;
 	for (auto Iterator = Array.CreateConstIterator(); Iterator; ++Iterator)
@@ -307,9 +331,8 @@ FActiveEffectPack& UFXManagerSubsystem::GetActivePack(const FActiveEffectPackHan
 			return Pack;
 		}
 	}
-
-	FActiveEffectPack* Pack =  new FActiveEffectPack();
-	return *Pack;
+	
+	return TempPack;
 }
 
 void UFXManagerSubsystem::AddInstantPack(const UObject* WorldContextObject, const FActiveEffectPack& ActivePack)

@@ -64,6 +64,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "FX MAnager")
 	void StopActivePacks(const TArray<FActiveEffectPackHandle>& Handles);
 
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "FX Manager")
+	UFXSystemComponent* GetVfxSystemComponentByTag(const FActiveEffectPackHandle& Handle, FGameplayTag Tag);
+
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "FX Manager")
+	UAudioComponent* GetSfxSystemComponentByTag(const FActiveEffectPackHandle& Handle, FGameplayTag Tag);
+
 private:
 
 	UFXSystemComponent* SpawnVFXDataAtLocation(const FVFXData VFXData, const AActor* SourceActor, const FTransform& Transform) const;
@@ -89,4 +95,43 @@ private:
 
 	/* Converts an attachment rule to the needed attach location type enumerator */
 	static EAttachLocation::Type GetAttachLocationType(const EAttachmentRule& Rule);
+
+	template<typename Predicate>
+	UFXSystemComponent* Internal_GetVfxSystemComponent(const FActiveEffectPackHandle& Handle, Predicate Pred)
+	{
+		const FActiveEffectPack& Pack = GetActivePack(Handle);
+		if(!Pack.IsValid())
+		{
+			return nullptr;
+		}
+
+		// Try finding an active effect that matches our tag
+		// Return the object within our found active effect if it exists, otherwise a null pointer
+		if(const FActiveEffect<UFXSystemComponent*>* FoundValue = Pack.ActiveFXSystemComponents.FindByPredicate(Pred))
+		{
+			return (*FoundValue).Object;
+		}
+
+		return nullptr;
+	}
+
+	template<typename Predicate>
+	UAudioComponent* Internal_FindSfxSystemComponent(const FActiveEffectPackHandle& Handle,
+	Predicate Pred)
+	{
+		const FActiveEffectPack& Pack = GetActivePack(Handle);
+		if(!Pack.IsValid())
+		{
+			return nullptr;
+		}
+
+		// Try finding an active effect that matches our tag
+		// Return the object within our found active effect if it exists, otherwise a null pointer
+		if(const FActiveEffect<UAudioComponent*>* FoundValue = Pack.ActiveSoundComponents.FindByPredicate(Pred))
+		{
+			return (*FoundValue).Object;
+		}
+
+		return nullptr;
+	}
 };

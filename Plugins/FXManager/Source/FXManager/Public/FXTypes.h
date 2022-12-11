@@ -116,6 +116,10 @@ struct FFXData
 
 	virtual ~FFXData() = default;
 
+	// Tag that can be used to access the spawned FFXData once the FX Manager spawns the Effect
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (Categories = "Effect"))
+	FGameplayTag AccessTag;
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FAttachData AttachmentData;
 
@@ -201,10 +205,7 @@ struct FActiveEffectPackHandle
 {
 	GENERATED_BODY()
 
-		FActiveEffectPackHandle()
-	{
-		Id = -1;
-	}
+	FActiveEffectPackHandle(): Id(-1), ActivationType(EEffectActivationType::None) {}
 
 	FActiveEffectPackHandle(int InId, EEffectActivationType InActivationType)
 	{
@@ -223,6 +224,20 @@ private:
 	int Id;
 
 	EEffectActivationType ActivationType;
+};
+
+template<class T>
+struct FActiveEffect
+{
+	FActiveEffect(T InObject, FGameplayTag InTag)
+	{
+		Object = InObject;
+		AccessTag = InTag;
+	}
+	
+	FGameplayTag AccessTag;
+	T Object;
+	
 };
 
 USTRUCT()
@@ -256,11 +271,11 @@ struct FActiveEffectPack
 	TWeakObjectPtr<AActor> SourceActor;
 	TWeakObjectPtr<AActor> TargetActor;
 	TWeakObjectPtr<USceneComponent> AttachComponent;
-	TArray<UFXSystemComponent*> ActiveFXSystemComponents;
-	TArray<UAudioComponent*> ActiveSoundComponents;
+	TArray<FActiveEffect<UFXSystemComponent*>> ActiveFXSystemComponents;
+	TArray<FActiveEffect<UAudioComponent*>> ActiveSoundComponents;
 
-	void AddActiveVFX(UFXSystemComponent* VFX) { ActiveFXSystemComponents.Add(VFX); }
-	void AddActiveSound(UAudioComponent* Sound) { ActiveSoundComponents.Add(Sound); }
+	void AddActiveVFX(UFXSystemComponent* VFX, FGameplayTag AccessTag) { ActiveFXSystemComponents.Add( FActiveEffect(VFX, AccessTag)); }
+	void AddActiveSound(UAudioComponent* Sound, FGameplayTag AccessTag) { ActiveSoundComponents.Add( FActiveEffect(Sound, AccessTag)); }
 
 	bool HasVFX() const { return ActiveFXSystemComponents.Num() > 0; }
 	bool HasSFX() const { return ActiveSoundComponents.Num() > 0; }
@@ -280,11 +295,11 @@ struct FActiveEffectPack
 	{
 		if (ActiveFXSystemComponents.IsEmpty()) return;
 
-		for(UFXSystemComponent* Component : ActiveFXSystemComponents)
+		for(const FActiveEffect<UFXSystemComponent*>& Effect : ActiveFXSystemComponents)
 		{
-			if(Component)
+			if(Effect.Object)
 			{
-				Component->Deactivate();
+				Effect.Object->Deactivate();
 			}
 		}
 
@@ -295,11 +310,11 @@ struct FActiveEffectPack
 	{
 		if (ActiveSoundComponents.IsEmpty()) return;
 
-		for(UAudioComponent* Component : ActiveSoundComponents)
+		for(const FActiveEffect<UAudioComponent*>& Effect: ActiveSoundComponents)
 		{
-			if(Component)
+			if(Effect.Object)
 			{
-				Component->Deactivate();
+				Effect.Object->Deactivate();
 			}
 		}
 
