@@ -90,6 +90,9 @@ Content/Characters/HeroFPP/*
 Content/Environment/*
 Content/MWBroadleafForest/*
 Content/MWCommon/*
+Content/Audio/*
+Content/Characters/Heroes/*
+Content/Effects/*
 
 Plugins/Developer/RiderLink/*
 Plugins/ALS-Community/
