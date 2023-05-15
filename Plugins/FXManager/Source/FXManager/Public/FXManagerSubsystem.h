@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EffectSpawnHandler.h"
 #include "FXTypes.h"
-#include "UObject/NoExportTypes.h"
 #include "FXManagerSubsystem.generated.h"
 
 /**
@@ -72,13 +72,8 @@ public:
 
 private:
 
-	UFXSystemComponent* SpawnVFXDataAtLocation(const FVFXData VFXData, const AActor* SourceActor, const FTransform& Transform) const;
-
-	UAudioComponent* SpawnSFXDataAtLocation(const FSFXData SFXData, const AActor* SourceActor, const FTransform& Transform) const;
-
-	UFXSystemComponent* SpawnVFXDataAtComponent(const FVFXData VFXData, const AActor* SourceActor, USceneComponent* AttachComponent) const;
-
-	UAudioComponent* SpawnSFXDataAtComponent(const FSFXData SFXData, const AActor* SourceActor, USceneComponent* AttachComponent) const;
+	FActiveEffectPackHandle Internal_PlayEffect(AActor* SourceActor, AActor* TargetActor, const FEffectPack& EffectPack, EEffectActivationType ActivationType,
+		SpawnEffects<UFXSystemComponent, FVFXData>* SpawnVisualEffects, SpawnEffects<UAudioComponent, FSFXData>* SpawnSoundEffects);
 
 	FActiveEffectPack& GetActivePack(const FActiveEffectPackHandle& Handle);
 
@@ -92,9 +87,6 @@ private:
 
 	/* Returns actor tags from the IGameplayTagInterface, if implemented by the passed in actor */
 	FGameplayTagContainer GetActorTags(const AActor* Actor) const;
-
-	/* Converts an attachment rule to the needed attach location type enumerator */
-	static EAttachLocation::Type GetAttachLocationType(const EAttachmentRule& Rule);
 
 	template<typename Predicate>
 	UFXSystemComponent* Internal_GetVfxSystemComponent(const FActiveEffectPackHandle& Handle, Predicate Pred)

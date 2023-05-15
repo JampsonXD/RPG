@@ -13,63 +13,12 @@
  */
 
 UENUM()
-enum class EArmorEquipSlot : uint8
-{
-	None,
-	Helmet,
-	Chest,
-	Gauntlets,
-	Legs
-};
-
-UENUM()
 enum class EWeaponEquipSlot : uint8
 {
 	None,
 	RightHand,
 	LeftHand,
 	BothHands
-};
-
-UENUM()
-enum class EGunFireMode : uint8
-{
-	SemiAutomatic,
-	Automatic,
-	BurstFire
-};
-
-USTRUCT(BlueprintType)
-struct FArmorEquipData
-{
-	GENERATED_BODY()
-
-	FArmorEquipData()
-	{
-		EquipSlot = EArmorEquipSlot::None;
-		ArmorItem = nullptr;
-		EquipStatus = FGameplayTag::EmptyTag;
-	}
-
-	FArmorEquipData(EArmorEquipSlot Slot, UObject* ActorPointer, FGameplayTag Status)
-	{
-		EquipSlot = Slot;
-		ArmorItem = ActorPointer;
-		EquipStatus = Status;
-	}
-	
-	// Equipment slot we are modifying
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equip Data")
-	EArmorEquipSlot EquipSlot;
-
-	// Pointer to the actor we are trying to equip/unequip
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equip Data")
-	UObject* ArmorItem;
-
-	// Status of our equipment, ex. whether we are equipping or unequipping the item
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equip Data")
-	FGameplayTag EquipStatus;
-	
 };
 
 USTRUCT(BlueprintType)

@@ -10,7 +10,7 @@ class USensingSystemComponent;
 /**
  * 
  */
-UCLASS(Blueprintable, meta = (ShowWorldContextPin))
+UCLASS(Blueprintable, DefaultToInstanced, EditInlineNew, meta = (ShowWorldContextPin))
 class SENSINGSYSTEM_API UCollectionType : public UObject
 {
 	GENERATED_BODY()
@@ -24,17 +24,22 @@ public:
 };
 
 
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, DefaultToInstanced, EditInlineNew)
 class SENSINGSYSTEM_API UFilterSensingData : public UObject
 {
 	GENERATED_BODY()
 
 public:
-
-	/* Returns all actors that make it past a filtering process and are available for sensing */
+	/**
+	 * @brief Returns whether an actor meets the filter criteria.
+	 * @param SensingSystemComponent The owning SensingSystemComponent checking if an actor meets the filter criteria
+	 * @param SensingSystemOwner The owning Actor of the Sensing System Component
+	 * @param TargetActor The actor we are checking against
+	 * @return True if the actor meets the criteria and can be sensed, false if the actor does not meet the criteria
+	 */
 	UFUNCTION()
-	virtual TArray<AActor*> FilterActorsForSensing(USensingSystemComponent* SensingSystemComponent, AActor* SensingSystemOwner, const TArray<AActor*>& TargetActors) const;
+	virtual bool FilterActorForSensing(USensingSystemComponent* SensingSystemComponent, AActor* SensingSystemOwner, const AActor* TargetActor) const;
 
 	UFUNCTION(BlueprintImplementableEvent)
-	TArray<AActor*> K2_FilterActorsForSensing(USensingSystemComponent* SensingSystemComponent, AActor* SensingSystemOwner, UPARAM(ref) const TArray<AActor*>& TargetActors) const;
+	bool K2_FilterActorForSensing(USensingSystemComponent* SensingSystemComponent, AActor* SensingSystemOwner, const AActor* TargetActor) const;
 };

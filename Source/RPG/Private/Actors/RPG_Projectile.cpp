@@ -5,7 +5,7 @@
 
 #include "RPGBFL_MainFunctions.h"
 
-class UActorPoolWorldSubsystem;
+class UPoolWorldSubsystem;
 // Sets default values
 ARPG_Projectile::ARPG_Projectile()
 {

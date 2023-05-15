@@ -2,10 +2,6 @@
 
 
 #include "GAS/AbilityTasks/AT_WaitForMultiOverlap.h"
-
-#include "Components/CapsuleComponent.h"
-#include "Components/SphereComponent.h"
-#include "GameFramework/Character.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 UAT_WaitForMultiOverlap::UAT_WaitForMultiOverlap(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -21,7 +17,8 @@ void UAT_WaitForMultiOverlap::Activate()
 	{
 		FTimerDelegate TimerDelegate;
 		TimerDelegate.BindUObject(this, &UAT_WaitForMultiOverlap::Update);
-		TimerHandle = World->GetTimerManager().SetTimerForNextTick(TimerDelegate);
+		World->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, UpdateInterval, true);
+		Update();
 	}
 }
 
@@ -38,6 +35,8 @@ FString UAT_WaitForMultiOverlap::GetDebugString() const
 void UAT_WaitForMultiOverlap::OnDestroy(bool bAbilityEnded)
 {
 	Super::OnDestroy(bAbilityEnded);
+
+	TimerHandle.Invalidate();
 }
 
 void UAT_WaitForMultiOverlap::Update()
@@ -45,9 +44,45 @@ void UAT_WaitForMultiOverlap::Update()
 	TArray<AActor*> NewOverlappingActors;
 	bool bFoundOverlappingActors = GetOverlappingActorsFromSphereTrace(NewOverlappingActors);
 
-	if(OverlappingActors.IsEmpty() && !bFoundOverlappingActors)
+	TArray<AActor*> RemovingActors;
+	TArray<AActor*> AddingActors;
+
+	// Get our adding actors
+	for(int i = 0; i < OverlappingActors.Num(); i++)
 	{
-		
+		AActor* Actor = OverlappingActors[i];
+
+		// If the overlapping actor is not contained in the new array, we are going to be removing this actor
+		if(!NewOverlappingActors.Contains(Actor))
+		{
+			RemovingActors.Add(Actor);
+			OverlappingActors.Remove(Actor);
+			i--;
+		}
+		// If both are contained, they aren't going to be added or removed
+		else
+		{
+			NewOverlappingActors.Remove(Actor);
+		}
+	}
+
+	if(RemovingActors.Num() > 0)
+	{
+		FGameplayAbilityTargetData_ActorArray* Data = new FGameplayAbilityTargetData_ActorArray();
+		Data->TargetActorArray.Append(RemovingActors);
+		FGameplayAbilityTargetDataHandle Handle;
+		Handle.Add(Data);
+		OnActorRemoved.Broadcast(Handle);
+	}
+
+	if(NewOverlappingActors.Num() > 0)
+	{
+		OverlappingActors.Append(NewOverlappingActors);
+		FGameplayAbilityTargetData_ActorArray* Data = new FGameplayAbilityTargetData_ActorArray();
+		Data->TargetActorArray.Append(NewOverlappingActors);
+		FGameplayAbilityTargetDataHandle Handle;
+		Handle.Add(Data);
+		OnActorAdded.Broadcast(Handle);
 	}
 }
 
@@ -60,13 +95,11 @@ bool UAT_WaitForMultiOverlap::GetOverlappingActorsFromSphereTrace(TArray<AActor*
 		return false;
 	}
 	
-	UKismetSystemLibrary::SphereOverlapActors(AvatarActor, AvatarActor->GetActorLocation(), SphereRadius, OverlapCollisionChannels, OptionalActorFilter, IgnoreActors, InOverlappingActors);
-
-	return InOverlappingActors.Num() > 0;
+	return UKismetSystemLibrary::SphereOverlapActors(AvatarActor, AvatarActor->GetActorLocation(), SphereRadius, OverlapCollisionChannels, OptionalActorFilter, IgnoreActors, InOverlappingActors);
 }
 
 UAT_WaitForMultiOverlap* UAT_WaitForMultiOverlap::WaitForMultiSphereOverlap(UGameplayAbility* OwningAbility,
-	FName TaskInstanceName, float Radius, TArray<TEnumAsByte<EObjectTypeQuery>> CollisionChannels,
+	FName TaskInstanceName, float Radius, float UpdateTiming, TArray<TEnumAsByte<EObjectTypeQuery>> CollisionChannels,
 	TSubclassOf<AActor> OptionalActorClassFilter, TArray<AActor*> ActorsToIgnore)
 {
 	UAT_WaitForMultiOverlap* Object = NewAbilityTask<UAT_WaitForMultiOverlap>(OwningAbility, TaskInstanceName);
@@ -74,5 +107,6 @@ UAT_WaitForMultiOverlap* UAT_WaitForMultiOverlap::WaitForMultiSphereOverlap(UGam
 	Object->OverlapCollisionChannels = CollisionChannels;
 	Object->OptionalActorFilter = OptionalActorClassFilter;
 	Object->IgnoreActors = ActorsToIgnore;
+	Object->UpdateInterval = UpdateTiming;
 	return Object;
 }

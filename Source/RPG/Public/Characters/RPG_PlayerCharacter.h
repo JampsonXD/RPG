@@ -20,17 +20,10 @@ class RPG_API ARPG_PlayerCharacter : public ARPG_Character, public IInteractionS
 	GENERATED_BODY()
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FirstPersonCamera;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* FirstPersonSpringArm;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* ThirdPersonCamera;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* ThirdPersonSpringArm;
-
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	class UInteractionSystemComponent* InteractionSystemComponent;
@@ -88,18 +81,10 @@ public:
 	virtual UInteractionSystemComponent* GetInteractionSystemComponent() const override;
 
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCamera; }
-
-	UFUNCTION(BlueprintCallable)
-	FORCEINLINE USpringArmComponent* GetFirstPersonSpringArmComponent() const { return FirstPersonSpringArm; }
-
-	UFUNCTION(BlueprintCallable)
 	FORCEINLINE UCameraComponent* GetThirdPersonCameraComponent() const { return ThirdPersonCamera; }
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE USpringArmComponent* GetThirdPersonSpringArmComponent() const { return ThirdPersonSpringArm; }
-
-
 
 /*********************************************/
 			/* Weapon System */

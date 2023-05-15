@@ -8,8 +8,8 @@ TArray<AActor*> UCollectionType::GatherActorsForSensing_Implementation(USensingS
 	return TArray<AActor*>();
 }
 
-TArray<AActor*> UFilterSensingData::FilterActorsForSensing(USensingSystemComponent* SensingSystemComponent,
-	AActor* SensingSystemOwner, const TArray<AActor*>& TargetActors) const
+bool UFilterSensingData::FilterActorForSensing(USensingSystemComponent* SensingSystemComponent,
+	AActor* SensingSystemOwner, const AActor* TargetActor) const
 {
-	return TargetActors;
+	return true;
 }

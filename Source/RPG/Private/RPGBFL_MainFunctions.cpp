@@ -5,7 +5,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
-#include "ActorPoolWorldSubsystem.h"
+#include "PoolWorldSubsystem.h"
 #include "RPGLoadingScreenModule.h"
 #include "RPG_GameSingleton.h"
 
@@ -76,6 +76,22 @@ int URPGBFL_MainFunctions::AppendUnique(const TArray<UProperty*>& TargetArray, U
 	return UniqueCount;
 }
 
+TArray<AActor*> URPGBFL_MainFunctions::GetUniqueActorsFromHitResults(const TArray<FHitResult>& HitResults)
+{
+	TArray<AActor*> Results;
+
+	for (auto HitResult : HitResults)
+	{
+		AActor* Actor = HitResult.GetActor();
+		if(Actor)
+		{
+			Results.AddUnique(Actor);
+		}
+	}
+
+	return Results;
+}
+
 bool URPGBFL_MainFunctions::GetFirstActorOfClassOrFirstActor(TArray<AActor*> ActorArray,
                                                              TSubclassOf<AActor> ActorFilter, AActor*& FoundActor)
 {
@@ -108,7 +124,7 @@ bool URPGBFL_MainFunctions::AddActorToPool(AActor* TargetActor)
 		return false;
 	}
 
-	if(UActorPoolWorldSubsystem* Subsystem = UActorPoolWorldSubsystem::GetActorPoolWorldSubsystem(TargetActor))
+	if(UPoolWorldSubsystem* Subsystem = UPoolWorldSubsystem::GetActorPoolWorldSubsystem(TargetActor))
 	{
 		return Subsystem->AddActorToPool(TargetActor);	
 	}

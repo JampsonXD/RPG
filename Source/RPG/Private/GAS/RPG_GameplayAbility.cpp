@@ -4,7 +4,7 @@
 #include "GAS/RPG_GameplayAbility.h"
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystemComponent.h"
-#include "ActorPoolWorldSubsystem.h"
+#include "PoolWorldSubsystem.h"
 #include "FXManagerSubsystem.h"
 #include "FXTypes.h"
 #include "RPG_Character.h"
@@ -116,7 +116,7 @@ bool URPG_GameplayAbility::MakeAndApplyGameplayEffectContainerSpecFromEffectMap(
 }
 
 FActiveEffectPackHandle URPG_GameplayAbility::AddCameraEffectToOwner(const FEffectPack& EffectPack,
-	FTransform Transform, bool bRemoveOnAbilityEnd)
+	FTransform Transform, EEffectActivationType ActivationType, bool bRemoveOnAbilityEnd)
 {
 	FActiveEffectPackHandle Handle;
 	
@@ -134,8 +134,11 @@ FActiveEffectPackHandle URPG_GameplayAbility::AddCameraEffectToOwner(const FEffe
 		// Get the FX Manager and Play an Attached Effect on our Camera Component
 		if(UFXManagerSubsystem* FXManager = UFXManagerSubsystem::GetFXManager())
 		{
+			// Even if we want said to pass in an instant activation type, we need to use active if we are removing the effect pack on end
+			ActivationType = bRemoveOnAbilityEnd ? EEffectActivationType::Active : ActivationType;
+			
 			Handle = FXManager->PlayEffectAttached(AvatarActor, nullptr, CameraComponent, EffectPack,
-				bRemoveOnAbilityEnd ? EEffectActivationType::Active : EEffectActivationType::Instant);
+				ActivationType);
 			
 			if(bRemoveOnAbilityEnd)
 			{
@@ -174,7 +177,7 @@ ARPG_Projectile* URPG_GameplayAbility::RequestProjectile_Internal(const TSubclas
 		return nullptr;
 	}
 
-	if (UActorPoolWorldSubsystem* PoolingSystem = UActorPoolWorldSubsystem::GetActorPoolWorldSubsystem(this))
+	if (UPoolWorldSubsystem* PoolingSystem = UPoolWorldSubsystem::GetActorPoolWorldSubsystem(this))
 	{
 		APawn* PawnAvatarActor = Cast<APawn>(GetAvatarActorFromActorInfo());
 		

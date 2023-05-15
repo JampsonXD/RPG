@@ -1,9 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "RPG_Character.h"
-
 #include "BFL_Inventory.h"
-#include "RPGAssetManager.h"
 #include "RPG_PlayerController.h"
 #include "RPG_PlayerState.h"
 #include "Components/CapsuleComponent.h"
@@ -33,6 +31,12 @@ ARPG_Character::ARPG_Character(const FObjectInitializer& ObjectInitializer) : Su
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
+
+	if(CharacterData)
+	{
+		GetMesh()->SetSkeletalMesh(CharacterData->CharacterMesh);
+		GetMesh()->SetAnimInstanceClass(CharacterData->AnimClass);
+	}
 }
 
 UAbilitySystemComponent* ARPG_Character::GetAbilitySystemComponent() const
@@ -79,9 +83,9 @@ float ARPG_Character::GetCharacterLevel()
 void ARPG_Character::AddDefaultAbilitySet()
 {
 	// Activate our default Ability Set if its not currently active
-	if(!DefaultAbilitySetHandle.IsActive() && DefaultAbilitySet)
+	if(!DefaultAbilitySetHandle.IsActive() && CharacterData && CharacterData->DefaultCharacterAbilitySet)
 	{
-		DefaultAbilitySetHandle = AbilitySystemComponent->AddAbilitySet(DefaultAbilitySet, this);
+		DefaultAbilitySetHandle = AbilitySystemComponent->AddAbilitySet(CharacterData->DefaultCharacterAbilitySet, this);
 	}
 }
 
@@ -146,28 +150,6 @@ void ARPG_Character::InitAttributeSets(class ARPG_PlayerState* PS)
 	AttributeSet = PS->GetAttributeSet();
 }
 
-void ARPG_Character::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-
-	URPGAssetManager& AssetManager = URPGAssetManager::Get();
-	TArray<FName> Bundles = TArray<FName>();
-	Bundles.Add(FName("InWorld"));
-	const FStreamableDelegate Delegate = FStreamableDelegate::CreateUObject(this, &ARPG_Character::OnCharacterDataLoaded, CharacterDataAssetID);
-	AssetManager.LoadPrimaryAsset(CharacterDataAssetID, Bundles, Delegate, FStreamableManager::AsyncLoadHighPriority);
-}
-
-void ARPG_Character::OnCharacterDataLoaded(FPrimaryAssetId LoadedId)
-{
-	const URPGAssetManager& AssetManager = URPGAssetManager::Get();
-
-	if(const URPG_CharacterDataAsset* CharacterData = Cast<URPG_CharacterDataAsset>(AssetManager.GetPrimaryAssetObject(LoadedId)))
-	{
-		GetMesh()->SetSkeletalMesh(CharacterData->CharacterMesh);
-		GetMesh()->SetAnimInstanceClass(CharacterData->AnimClass);
-	}
-}
-
 void ARPG_Character::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
 {
 	if(AbilitySystemComponent.IsValid())
@@ -229,4 +211,19 @@ bool ARPG_Character::IsWeaponLowered_Implementation() const
 bool ARPG_Character::IsJumping_Implementation() const
 {
 	return HasMatchingGameplayTag(FRPG_TagLibrary::Get().JumpingTag());
+}
+
+TMap<FGameplayTag, FAttackMontageContainer> ARPG_Character::GetPrimaryAttackMap()
+{
+	ensure(CharacterData);
+	return CharacterData->PrimaryAttackMontages;
+}
+
+void ARPG_Character::OnConstruction(const FTransform& Transform)
+{
+	if(CharacterData)
+	{
+		GetMesh()->SetSkeletalMesh(CharacterData->CharacterMesh);
+		GetMesh()->SetAnimInstanceClass(CharacterData->AnimClass);
+	}
 }

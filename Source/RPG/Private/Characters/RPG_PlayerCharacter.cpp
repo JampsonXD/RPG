@@ -25,27 +25,20 @@ ARPG_PlayerCharacter::ARPG_PlayerCharacter(const FObjectInitializer& ObjectIniti
 	GetMesh()->SetRelativeRotation(FRotator(0, 0, -90.f));
 
 	// Camera Setup
-	FirstPersonSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("FP Spring Arm"));
-	FirstPersonSpringArm->SetupAttachment(GetCapsuleComponent());
-	FirstPersonSpringArm->SetRelativeLocation(FVector(0.f, 0.f, 90.f));
-	FirstPersonSpringArm->SetRelativeRotation(FRotator::ZeroRotator);
-	FirstPersonSpringArm->bUsePawnControlRotation = true;
-	FirstPersonSpringArm->bEnableCameraLag = true;
-	FirstPersonSpringArm->bEnableCameraRotationLag = true;
-	FirstPersonSpringArm->CameraLagSpeed = 10.f;
-	FirstPersonSpringArm->CameraRotationLagSpeed = 50.f;
-	FirstPersonSpringArm->CameraLagMaxDistance = 500.f;
+	ThirdPersonSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("FP Spring Arm"));
+	ThirdPersonSpringArm->SetupAttachment(GetCapsuleComponent());
+	ThirdPersonSpringArm->SetRelativeLocation(FVector(0.f, 0.f, 90.f));
+	ThirdPersonSpringArm->SetRelativeRotation(FRotator::ZeroRotator);
+	ThirdPersonSpringArm->bUsePawnControlRotation = true;
+	ThirdPersonSpringArm->bEnableCameraLag = true;
+	ThirdPersonSpringArm->bEnableCameraRotationLag = true;
+	ThirdPersonSpringArm->CameraLagSpeed = 10.f;
+	ThirdPersonSpringArm->CameraRotationLagSpeed = 50.f;
+	ThirdPersonSpringArm->CameraLagMaxDistance = 500.f;
 
-	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FP Camera"));
-	FirstPersonCamera->SetupAttachment(FirstPersonSpringArm);
-	FirstPersonCamera->SetFieldOfView(97.f);
-
-	ThirdPersonSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("TP Spring Arm"));
-	ThirdPersonSpringArm->SetupAttachment(GetMesh(), "Head");
-	ThirdPersonSpringArm->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
-
-	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("TP Camera"));
+	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FP Camera"));
 	ThirdPersonCamera->SetupAttachment(ThirdPersonSpringArm);
+	ThirdPersonCamera->SetFieldOfView(97.f);
 
 
 	/* Weapon System */

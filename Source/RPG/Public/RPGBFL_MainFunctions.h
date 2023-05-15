@@ -52,6 +52,14 @@ class RPG_API URPGBFL_MainFunctions : public UBlueprintFunctionLibrary
 	static int AppendUnique(const TArray<UProperty*>& TargetArray, UPARAM(ref)TArray<UProperty*>& OutArray);
 
 	/**
+	 * @brief Takes in an array of hit results and returns all unique actors.
+	 * @param HitResults The array of hit results.
+	 * @return A new array of valid actors
+	 */
+	UFUNCTION(BlueprintCallable, Category = "RPGBFL Main Functions")
+	static TArray<AActor*> GetUniqueActorsFromHitResults(const TArray<FHitResult>& HitResults);
+
+	/**
 	 * Returns the first actor of the passed in actor filter, or the first actor within the array
 	 * @param ActorArray : Array we are filtering
 	 * @param ActorFilter : The actor subclass we are checking against

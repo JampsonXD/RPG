@@ -17,6 +17,7 @@ class RPG_API URPGAssetManager : public UAssetManager
 public:
 	
 	static const FPrimaryAssetType CharacterType;
+	static const FPrimaryAssetType GameModeType;
 	
 	static URPGAssetManager& Get();
 

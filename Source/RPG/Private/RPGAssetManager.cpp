@@ -6,6 +6,7 @@
 #include "AbilitySystemGlobals.h"
 
 const FPrimaryAssetType URPGAssetManager::CharacterType = TEXT("Character");
+const FPrimaryAssetType URPGAssetManager::GameModeType = TEXT("GameMode");
 
 URPGAssetManager& URPGAssetManager::Get()
 {

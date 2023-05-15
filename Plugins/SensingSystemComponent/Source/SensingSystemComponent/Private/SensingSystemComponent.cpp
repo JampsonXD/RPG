@@ -16,7 +16,7 @@ void USensingSystemComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// Verify our collection class is valid
-	ensure(GatherTargetsClass);
+	ensure(GatherTargetCollections.Num() > 0);
 }
 
 void USensingSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -29,11 +29,17 @@ void USensingSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType
 void USensingSystemComponent::UpdateSensingActors()
 {
 	TArray<AActor*> OldSensingActors = SensingActors;
-	TArray<AActor*> NewSensingActors = GatherTargetsClass.GetDefaultObject()->GatherActorsForSensing(this, AvatarActor);
+	TArray<AActor*> NewSensingActors;
+	// Gather all newly sensed actors
+	for (const auto Collection : GatherTargetCollections)
+	{
+		NewSensingActors.Append(Collection->GatherActorsForSensing(this, GetOwner()));
+	}
 
 	/* If we gathered any nearby sensed actors and any met our filters criteria */
-	if(!NewSensingActors.IsEmpty() && FilterSensingActors(NewSensingActors))
+	if(!NewSensingActors.IsEmpty())
 	{
+		NewSensingActors = FilterSensingActors(NewSensingActors);
 		// Remove any actors we sensed before and are still sensing
 		for(int i = 0; i < NewSensingActors.Num() && OldSensingActors.Num() > 0; i++)
 		{
@@ -67,26 +73,31 @@ void USensingSystemComponent::UpdateSensingActors()
 	}
 }
 
-bool USensingSystemComponent::FilterSensingActors(TArray<AActor*>& GatheredActors)
+TArray<AActor*> USensingSystemComponent::FilterSensingActors(const TArray<AActor*>& GatheredActors)
 {
 	/* Gathered actors will have at least one actor, verify our filter is valid or return early */
-	if(!SensingFilterClass)
+	if(SensingFilters.IsEmpty())
 	{
-		return true;
+		return GatheredActors;
 	}
 
-	const UFilterSensingData* SensingFilter = SensingFilterClass.GetDefaultObject();
-	/* Filter actors through our C++ native function */
-	GatheredActors = SensingFilter->FilterActorsForSensing(this, GetAvatarActor(), GatheredActors);
+	TArray<AActor*> FilteredActors = GatheredActors;
 
-	if(GatheredActors.IsEmpty())
+	// Loop through each filter and keep actors that pass all tests
+	for (const auto Filter : SensingFilters)
 	{
-		return false;
+		for (int i = 0; i < FilteredActors.Num(); i++)
+		{
+			const AActor* Actor = FilteredActors[i];
+			if(!Filter->FilterActorForSensing(this, GetAvatarActor(), Actor) || !Filter->K2_FilterActorForSensing(this, GetAvatarActor(), Actor))
+			{
+				FilteredActors.RemoveAt(i);
+				--i;
+			}
+		}
 	}
-
-	/* Filter actors through our BP function */
-	GatheredActors = SensingFilter->K2_FilterActorsForSensing(this, GetAvatarActor(), GatheredActors);
-	return !GatheredActors.IsEmpty();
+	
+	return FilteredActors;
 }
 
 void USensingSystemComponent::AddSensingActor(AActor* SensingActor)

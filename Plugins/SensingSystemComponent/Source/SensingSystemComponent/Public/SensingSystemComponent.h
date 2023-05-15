@@ -39,15 +39,13 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnActorLost OnActorLost;
 
-protected:
-
 	/* Determines how we gather possible targets for sensing */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TSubclassOf<UCollectionType> GatherTargetsClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Instanced)
+	TArray<UCollectionType*> GatherTargetCollections;
 
 	/* Sensing Filter that we will run through with our gathered targets */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TSubclassOf<UFilterSensingData> SensingFilterClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Instanced)
+	TArray<UFilterSensingData*> SensingFilters;
 
 	/* The amount of pre-allocated slots we will have for sensing actors */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
@@ -74,7 +72,7 @@ protected:
 	 *
 	 */
 	UFUNCTION()
-	virtual bool FilterSensingActors(TArray<AActor*>& GatheredActors);
+	virtual TArray<AActor*> FilterSensingActors(const TArray<AActor*>& GatheredActors);
 
 	UFUNCTION()
 	virtual void AddSensingActor(AActor* SensingActor);

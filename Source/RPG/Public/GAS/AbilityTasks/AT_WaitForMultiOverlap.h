@@ -24,6 +24,9 @@ class RPG_API UAT_WaitForMultiOverlap : public UAbilityTask
 
 	UPROPERTY()
 	float SphereRadius;
+
+	UPROPERTY()
+	float UpdateInterval;
 	
 	TArray<TEnumAsByte<EObjectTypeQuery>> OverlapCollisionChannels;
 
@@ -58,7 +61,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Ability|Tasks", meta = (HidePin = "OwningAbility", DefaultToSelf = "OwningAbility", BlueprintInternalUseOnly = "TRUE", AutoCreateRefTerm = "ActorsToIgnore"))
 	static UAT_WaitForMultiOverlap* WaitForMultiSphereOverlap(UGameplayAbility* OwningAbility, FName TaskInstanceName,
-		float Radius, TArray<TEnumAsByte<EObjectTypeQuery>> CollisionChannels, TSubclassOf<AActor> OptionalActorClassFilter, TArray<AActor*> ActorsToIgnore);
+		float Radius, float UpdateTiming, TArray<TEnumAsByte<EObjectTypeQuery>> CollisionChannels, TSubclassOf<AActor> OptionalActorClassFilter, TArray<AActor*> ActorsToIgnore);
 
 	UPROPERTY(BlueprintAssignable)
 	FATWaitForMultiOverlapEventDelegate OnActorAdded;

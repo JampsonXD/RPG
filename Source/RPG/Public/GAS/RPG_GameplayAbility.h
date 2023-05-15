@@ -66,7 +66,7 @@ protected:
 	 **/
 	UFUNCTION(BlueprintCallable, Category = "RPG Gameplay Ability | Camera")
 	FActiveEffectPackHandle AddCameraEffectToOwner(const FEffectPack& EffectPack,
-	FTransform Transform, bool bRemoveOnAbilityEnd = false);
+	FTransform Transform, EEffectActivationType ActivationType = EEffectActivationType::Instant, bool bRemoveOnAbilityEnd = false);
 
 	UFUNCTION(BlueprintCallable, Category = "RPG Gameplay Ability | Actor Spawning")
 	ARPG_Projectile* RequestProjectile(TSubclassOf<ARPG_Projectile> ActorClass, FVector Velocity, FVector Location, FRotator Rotation);

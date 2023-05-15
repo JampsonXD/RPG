@@ -250,17 +250,15 @@ struct FActiveEffectPack
 		Id = -1;
 		SourceActor = nullptr;
 		TargetActor = nullptr;
-		AttachComponent = nullptr;
 		ActivationType = EEffectActivationType::None;
 	}
-
-	FActiveEffectPack(int InId, AActor* InSourceActor, AActor* InTargetActor, USceneComponent* InAttachComponent, EEffectActivationType InActivationType)
+	
+	FActiveEffectPack(int InId, AActor* InSourceActor, AActor* InTargetActor, EEffectActivationType InActivationType)
 	{
 		Id = InId;
 		ActivationType = InActivationType;
 		SourceActor = InSourceActor;
 		TargetActor = InTargetActor;
-		AttachComponent = InAttachComponent;
 	}
 
 	bool operator==(const FActiveEffectPackHandle& Other) const { return Id == Other.GetId(); }
@@ -270,7 +268,6 @@ struct FActiveEffectPack
 	EEffectActivationType ActivationType;
 	TWeakObjectPtr<AActor> SourceActor;
 	TWeakObjectPtr<AActor> TargetActor;
-	TWeakObjectPtr<USceneComponent> AttachComponent;
 	TArray<FActiveEffect<UFXSystemComponent*>> ActiveFXSystemComponents;
 	TArray<FActiveEffect<UAudioComponent*>> ActiveSoundComponents;
 
